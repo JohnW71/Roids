@@ -5,6 +5,11 @@ VisualStudioVersion = 15.0.28307.102
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Roids", "Roids\Roids.vcxproj", "{853B9FF7-7067-42E9-BAC3-EA1FB8B9E1F9}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F7CBBA43-37C4-4DEA-9A75-CFC8C9212D3E}"
+	ProjectSection(SolutionItems) = preProject
+		Roids\log.txt = Roids\log.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
