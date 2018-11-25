@@ -1,7 +1,7 @@
 #pragma once
 
-#define WINDOW_WIDTH 1024
-#define WINDOW_HEIGHT 768
+#define WINDOW_WIDTH 1280
+#define WINDOW_HEIGHT 920
 
 #define PI 3.14259
 
@@ -21,15 +21,29 @@
 const int rockGridSize = ASTEROID_MAX_DIAMETER * ASTEROID_MAX_DIAMETER;
 
 void outs(char *);
-void shipConfig(void);
+//void shipConfig(void);
+void createBuffer(struct bufferInfo *, int, int);
+void fillBuffer(struct bufferInfo *);
+void displayBuffer(struct bufferInfo *, HDC, int, int);
 
-struct Ship
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+
+//struct Ship
+//{
+//	int x;
+//	int y;
+//	int facing;
+//	int trajectory;
+//	int speed;
+//	int acceleration;
+//	int lives;
+//} ship;
+
+struct bufferInfo
 {
-	int x;
-	int y;
-	int facing;
-	int trajectory;
-	int speed;
-	int acceleration;
-	int lives;
-} ship;
+	BITMAPINFO info;
+	void *memory;
+	int width;
+	int height;
+	int pitch;
+} backBuffer;
