@@ -18,9 +18,15 @@
     <ClInclude Include="roids.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="win32_platform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="roids.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="win32_platform.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

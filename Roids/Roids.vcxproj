@@ -118,9 +118,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="roids.c" />
+    <ClCompile Include="win32_platform.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="roids.h" />
+    <ClInclude Include="win32_platform.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

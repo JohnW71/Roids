@@ -4,14 +4,36 @@
 #include <stdio.h> // sprintf
 #include <stdbool.h>
 #include <stdint.h>
+#include <xinput.h>
 
 #include "win32_platform.h"
+#include "roids.h"
 
-bool debugging = true;
-struct bufferInfo backBuffer;
+struct bufferInfo backBuffer, frontBuffer;
 
 static bool running = true;
 static char logFile[] = "log.txt";
+
+#define XInputGetState XInputGetState_
+#define XInputSetState XInputSetState_
+#define X_INPUT_GET_STATE(name) DWORD WINAPI name(DWORD dwUserIndex, XINPUT_STATE *pState)
+#define X_INPUT_SET_STATE(name) DWORD WINAPI name(DWORD dwUserIndex, XINPUT_VIBRATION *pVibration)
+
+typedef X_INPUT_GET_STATE(x_input_get_state);
+typedef X_INPUT_SET_STATE(x_input_set_state);
+
+X_INPUT_GET_STATE(XInputGetStateStub)
+{
+	return(ERROR_DEVICE_NOT_CONNECTED);
+}
+
+X_INPUT_SET_STATE(XInputSetStateStub)
+{
+	return(ERROR_DEVICE_NOT_CONNECTED);
+}
+
+static x_input_get_state *XInputGetState_ = XInputGetStateStub;
+static x_input_set_state *XInputSetState_ = XInputSetStateStub;
 
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 					_In_ LPWSTR lpCmdLine, _In_ int nShowCmd)
@@ -28,6 +50,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	else
 		fclose(lf);
 
+	loadXInput();
 	createBuffer(&backBuffer, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	MSG msg = {0};
@@ -71,7 +94,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		MessageBox(NULL, "Memory allocation failure", "Error", MB_ICONEXCLAMATION | MB_OK);
 		return 0;
 	}
-	memory.IsInitialized = true;
+	memory.isInitialized = true;
 
 	// get current cycle count
 	LARGE_INTEGER lastCounter;
@@ -91,12 +114,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 		// update and display buffer
 		HDC deviceContext = GetDC(hwnd);
-		struct bufferInfo frontBuffer = {0};
+		frontBuffer.info = backBuffer.info;
 		frontBuffer.memory = backBuffer.memory;
 		frontBuffer.width = backBuffer.width;
 		frontBuffer.height = backBuffer.height;
 		frontBuffer.pitch = backBuffer.pitch;
-		updateAndRender(&memory, &frontBuffer);
+		updateAndRender(&memory, &backBuffer);
 		displayBuffer(&frontBuffer, deviceContext, WINDOW_WIDTH, WINDOW_HEIGHT);
 		ReleaseDC(hwnd, deviceContext);
 
@@ -136,16 +159,49 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			PAINTSTRUCT paint;
 			HDC deviceContext = BeginPaint(hwnd, &paint);
-			displayBuffer(&backBuffer, deviceContext, WINDOW_WIDTH, WINDOW_HEIGHT);
+			displayBuffer(&frontBuffer, deviceContext, WINDOW_WIDTH, WINDOW_HEIGHT);
 			EndPaint(hwnd, &paint);
 			break;
 		}
+		case WM_SYSKEYDOWN:
+		case WM_SYSKEYUP:
+		case WM_KEYDOWN:
 		case WM_KEYUP:
 			switch (wParam)
 			{
+				case VK_LEFT:
+					outs("left");
+					OutputDebugString("left\n");
+					break;
+				case VK_RIGHT:
+					outs("right");
+					OutputDebugString("right\n");
+					break;
+				case VK_UP:
+					outs("up");
+					OutputDebugString("up\n");
+					break;
+				case VK_DOWN:
+					outs("down");
+					OutputDebugString("down\n");
+					break;
+				case VK_CONTROL:
+					outs("CTRL");
+					OutputDebugString("CTRL\n");
+					break;
 				case VK_ESCAPE:
+					outs("ESC");
+					OutputDebugString("ESC\n");
 					DestroyWindow(hwnd);
 					break;
+			}
+
+			bool altKeyWasDown = (lParam & (1 << 29));
+			if ((wParam == VK_F4) && altKeyWasDown)
+			{
+				outs("ALT F4");
+				OutputDebugString("ALT F4\n");
+				DestroyWindow(hwnd);
 			}
 			break;
 		case WM_DESTROY:
@@ -174,9 +230,6 @@ void outs(char *s)
 
 static void createBuffer(struct bufferInfo *buffer, int width, int height)
 {
-	if (debugging)
-		outs("createBuffer()");
-
 	if (buffer->memory)
 		VirtualFree(buffer->memory, 0, MEM_RELEASE);
 
@@ -198,9 +251,6 @@ static void createBuffer(struct bufferInfo *buffer, int width, int height)
 
 static void displayBuffer(struct bufferInfo *buffer, HDC deviceContext, int width, int height)
 {
-	if (debugging)
-		outs("displayBuffer()");
-
 	StretchDIBits(deviceContext,
 					0, 0,
 					width, height,
@@ -211,4 +261,31 @@ static void displayBuffer(struct bufferInfo *buffer, HDC deviceContext, int widt
 					&buffer->info,
 					DIB_RGB_COLORS,
 					SRCCOPY);
+}
+
+static void loadXInput(void)
+{
+	HMODULE XInputLibrary = LoadLibraryA("xinput1_4.dll");
+	if (!XInputLibrary)
+		XInputLibrary = LoadLibraryA("xinput9_1_0.dll");
+
+	if (!XInputLibrary)
+		XInputLibrary = LoadLibraryA("xinput1_3.dll");
+
+	if (XInputLibrary)
+	{
+		XInputGetState = (x_input_get_state *)GetProcAddress(XInputLibrary, "XInputGetState");
+		if (!XInputGetState)
+			XInputGetState = XInputGetStateStub;
+
+		XInputSetState = (x_input_set_state *)GetProcAddress(XInputLibrary, "XInputSetState");
+		if (!XInputSetState)
+			XInputSetState = XInputSetStateStub;
+
+		outs("XInput loaded");
+	}
+	else
+	{
+		outs("XInput not loaded");
+	}
 }

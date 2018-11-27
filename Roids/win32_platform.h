@@ -5,15 +5,8 @@
 
 void outs(char *);
 void createBuffer(struct bufferInfo *, int, int);
-void updateAndRender(struct GameMemory *, struct bufferInfo *);
+void updateAndRender(struct gameMemory *, struct bufferInfo *);
 void displayBuffer(struct bufferInfo *, HDC, int, int);
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+void loadXInput(void);
 
-struct bufferInfo
-{
-	BITMAPINFO info;
-	void *memory;
-	int width;
-	int height;
-	int pitch;
-};
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);

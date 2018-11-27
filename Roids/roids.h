@@ -1,5 +1,7 @@
 #pragma once
 
+#include <windows.h>
+
 // #define ASTEROID_MAX_COUNT 4
 // #define ASTEROID_MAX_DIAMETER 64
 // #define ASTEROID_MIN_DIAMETER 5
@@ -16,13 +18,23 @@
 
 // int rockGridSize = ASTEROID_MAX_DIAMETER * ASTEROID_MAX_DIAMETER;
 
+void outs(char *);
 //void shipConfig(void);
 void fillBuffer(struct bufferInfo *);
+
+struct bufferInfo
+{
+	BITMAPINFO info;
+	void *memory;
+	int width;
+	int height;
+	int pitch;
+};
 
 struct gameMemory
 {
 	bool isInitialized;
-	uint64 storageSize;
+	uint64_t storageSize;
 	void *storage;
 };
 

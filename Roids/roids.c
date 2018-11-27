@@ -1,10 +1,20 @@
+#include <stdint.h>
+#include <stdbool.h>
 #include "roids.h"
+
+void updateAndRender(struct gameMemory *memory, struct bufferInfo *buffer)
+{
+	if (!memory->isInitialized)
+	{
+		outs("memory no longer initialized somehow");
+		return;
+	}
+
+	fillBuffer(buffer);
+}
 
 static void fillBuffer(struct bufferInfo *buffer)
 {
-	if (debugging)
-		outs("fillBuffer()");
-
 	uint8_t *row = (uint8_t *)buffer->memory;
 
 	for (int y = 0; y < buffer->height; ++y)
@@ -18,24 +28,8 @@ static void fillBuffer(struct bufferInfo *buffer)
 	}
 }
 
-void updateAndRender(struct gameMemory *memory, struct bufferInfo *buffer)
-{
-	if (debugging)
-		outs("updateAndRender()");
-
-	if (!memory.isInitialized)
-	{
-		outs("memory no longer initialized somehow");
-	}
-
-	fillBuffer(&buffer);
-}
-
 // static void shipConfig(void)
 // {
-// 	if (debugging)
-// 		outs("shipConfig()");
-
 // 	ship.col = (GetSystemMetrics(SM_CXSCREEN) - WINDOW_WIDTH) / 2;
 // 	ship.row = (GetSystemMetrics(SM_CYSCREEN) - WINDOW_HEIGHT) / 2;
 // 	ship.facing = 0;
