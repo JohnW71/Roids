@@ -5,7 +5,7 @@
 
 void outs(char *);
 void createBuffer(struct bufferInfo *, int, int);
-void updateAndRender(struct bufferInfo *);
+void updateAndRender(struct GameMemory *, struct bufferInfo *);
 void displayBuffer(struct bufferInfo *, HDC, int, int);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 

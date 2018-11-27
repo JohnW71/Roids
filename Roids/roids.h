@@ -19,6 +19,13 @@
 //void shipConfig(void);
 void fillBuffer(struct bufferInfo *);
 
+struct gameMemory
+{
+	bool isInitialized;
+	uint64 storageSize;
+	void *storage;
+};
+
 //struct Ship
 //{
 //	int col;

@@ -7,6 +7,7 @@
 
 #include "win32_platform.h"
 
+bool debugging = true;
 struct bufferInfo backBuffer;
 
 static bool running = true;
@@ -42,7 +43,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 	if (!RegisterClassEx(&wc))
 	{
-		MessageBox(NULL, "Window registration failed", "Window registration failed", MB_ICONEXCLAMATION | MB_OK);
+		MessageBox(NULL, "Window registration failed", "Error", MB_ICONEXCLAMATION | MB_OK);
 		return 0;
 	}
 
@@ -56,9 +57,21 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 	if (!hwnd)
 	{
-		MessageBox(NULL, "Window creation failed", "Window creation failed", MB_ICONEXCLAMATION | MB_OK);
+		MessageBox(NULL, "Window creation failed", "Error", MB_ICONEXCLAMATION | MB_OK);
 		return 0;
 	}
+
+	// reserve memory block
+	struct gameMemory memory = {0};
+	memory.storageSize = 1073741824; // 1GB
+	memory.storage = VirtualAlloc(0, memory.storageSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+	if (!memory.storage)
+	{
+		outs("Memory allocation failure");
+		MessageBox(NULL, "Memory allocation failure", "Error", MB_ICONEXCLAMATION | MB_OK);
+		return 0;
+	}
+	memory.IsInitialized = true;
 
 	// get current cycle count
 	LARGE_INTEGER lastCounter;
@@ -83,7 +96,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		frontBuffer.width = backBuffer.width;
 		frontBuffer.height = backBuffer.height;
 		frontBuffer.pitch = backBuffer.pitch;
-		updateAndRender(&frontBuffer);
+		updateAndRender(&memory, &frontBuffer);
 		displayBuffer(&frontBuffer, deviceContext, WINDOW_WIDTH, WINDOW_HEIGHT);
 		ReleaseDC(hwnd, deviceContext);
 
@@ -161,6 +174,9 @@ void outs(char *s)
 
 static void createBuffer(struct bufferInfo *buffer, int width, int height)
 {
+	if (debugging)
+		outs("createBuffer()");
+
 	if (buffer->memory)
 		VirtualFree(buffer->memory, 0, MEM_RELEASE);
 
@@ -182,6 +198,9 @@ static void createBuffer(struct bufferInfo *buffer, int width, int height)
 
 static void displayBuffer(struct bufferInfo *buffer, HDC deviceContext, int width, int height)
 {
+	if (debugging)
+		outs("displayBuffer()");
+
 	StretchDIBits(deviceContext,
 					0, 0,
 					width, height,
