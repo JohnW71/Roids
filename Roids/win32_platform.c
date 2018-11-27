@@ -11,17 +11,23 @@
 
 struct bufferInfo backBuffer, frontBuffer;
 
+//int XOffset;
+int yOffset;
+
 static bool running = true;
 static char logFile[] = "log.txt";
 
+// manual function definitions to avoid requiring xinput lib during build or failing if it's missing
 #define XInputGetState XInputGetState_
 #define XInputSetState XInputSetState_
 #define X_INPUT_GET_STATE(name) DWORD WINAPI name(DWORD dwUserIndex, XINPUT_STATE *pState)
 #define X_INPUT_SET_STATE(name) DWORD WINAPI name(DWORD dwUserIndex, XINPUT_VIBRATION *pVibration)
 
+// function typedefs
 typedef X_INPUT_GET_STATE(x_input_get_state);
 typedef X_INPUT_SET_STATE(x_input_set_state);
 
+// stubs to do nothing if called unexpectedly
 X_INPUT_GET_STATE(XInputGetStateStub)
 {
 	return(ERROR_DEVICE_NOT_CONNECTED);
@@ -32,6 +38,7 @@ X_INPUT_SET_STATE(XInputSetStateStub)
 	return(ERROR_DEVICE_NOT_CONNECTED);
 }
 
+// function pointers
 static x_input_get_state *XInputGetState_ = XInputGetStateStub;
 static x_input_set_state *XInputSetState_ = XInputSetStateStub;
 
@@ -112,6 +119,56 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 			DispatchMessageA(&msg);
 		}
 
+		// poll controllers
+		for (DWORD ControllerIndex = 0; ControllerIndex < XUSER_MAX_COUNT; ++ControllerIndex)
+		{
+			XINPUT_STATE ControllerState;
+
+			if (XInputGetState(ControllerIndex, &ControllerState) == ERROR_SUCCESS)
+			{
+				XINPUT_GAMEPAD *pad = &ControllerState.Gamepad;
+
+				bool up = (pad->wButtons & XINPUT_GAMEPAD_DPAD_UP);
+				bool down = (pad->wButtons & XINPUT_GAMEPAD_DPAD_DOWN);
+				bool left = (pad->wButtons & XINPUT_GAMEPAD_DPAD_LEFT);
+				bool right = (pad->wButtons & XINPUT_GAMEPAD_DPAD_RIGHT);
+				bool start = (pad->wButtons & XINPUT_GAMEPAD_START);
+				bool back = (pad->wButtons & XINPUT_GAMEPAD_BACK);
+				bool leftShoulder = (pad->wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER);
+				bool rightShoulder = (pad->wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER);
+				bool aButton = (pad->wButtons & XINPUT_GAMEPAD_A);
+				bool bButton = (pad->wButtons & XINPUT_GAMEPAD_B);
+				bool xButton = (pad->wButtons & XINPUT_GAMEPAD_X);
+				bool yButton = (pad->wButtons & XINPUT_GAMEPAD_Y);
+
+				int16_t stickX = pad->sThumbLX;
+				int16_t stickY = pad->sThumbLY;
+
+				//XOffset += stickX >> 12;
+				yOffset += stickY >> 12;
+
+				if (aButton)
+				{
+					XINPUT_VIBRATION vibration;
+					vibration.wLeftMotorSpeed = 60000;
+					vibration.wRightMotorSpeed = 60000;
+					XInputSetState(0, &vibration);
+				}
+				else
+				{
+					XINPUT_VIBRATION vibration;
+					vibration.wLeftMotorSpeed = 0;
+					vibration.wRightMotorSpeed = 0;
+					XInputSetState(0, &vibration);
+				}
+			}
+			else
+			{
+				// other controllers are not available
+			}
+		}
+
+
 		// update and display buffer
 		HDC deviceContext = GetDC(hwnd);
 		frontBuffer.info = backBuffer.info;
@@ -119,7 +176,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		frontBuffer.width = backBuffer.width;
 		frontBuffer.height = backBuffer.height;
 		frontBuffer.pitch = backBuffer.pitch;
-		updateAndRender(&memory, &backBuffer);
+		updateAndRender(&memory, &backBuffer, yOffset);
 		displayBuffer(&frontBuffer, deviceContext, WINDOW_WIDTH, WINDOW_HEIGHT);
 		ReleaseDC(hwnd, deviceContext);
 
@@ -184,6 +241,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				case VK_DOWN:
 					outs("down");
 					OutputDebugString("down\n");
+					break;
+				case VK_SPACE:
+					outs("space");
+					OutputDebugString("space\n");
 					break;
 				case VK_CONTROL:
 					outs("CTRL");
@@ -263,6 +324,7 @@ static void displayBuffer(struct bufferInfo *buffer, HDC deviceContext, int widt
 					SRCCOPY);
 }
 
+// load dll manually to avoid requiring xinput lib during build
 static void loadXInput(void)
 {
 	HMODULE XInputLibrary = LoadLibraryA("xinput1_4.dll");

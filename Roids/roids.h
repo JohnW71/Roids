@@ -20,7 +20,7 @@
 
 void outs(char *);
 //void shipConfig(void);
-void fillBuffer(struct bufferInfo *);
+void fillBuffer(struct bufferInfo *, int);
 
 struct bufferInfo
 {

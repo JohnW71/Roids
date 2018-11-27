@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include "roids.h"
 
-void updateAndRender(struct gameMemory *memory, struct bufferInfo *buffer)
+void updateAndRender(struct gameMemory *memory, struct bufferInfo *buffer, int yOffset)
 {
 	if (!memory->isInitialized)
 	{
@@ -10,10 +10,10 @@ void updateAndRender(struct gameMemory *memory, struct bufferInfo *buffer)
 		return;
 	}
 
-	fillBuffer(buffer);
+	fillBuffer(buffer, yOffset);
 }
 
-static void fillBuffer(struct bufferInfo *buffer)
+static void fillBuffer(struct bufferInfo *buffer, int yOffset)
 {
 	uint8_t *row = (uint8_t *)buffer->memory;
 
@@ -22,7 +22,7 @@ static void fillBuffer(struct bufferInfo *buffer)
 		uint32_t *pixel = (uint32_t *)row;
 
 		for (int x = 0; x < buffer->width; ++x)
-			*pixel++ = (uint32_t)(255.0f * ((float)x / (float)buffer->width)) + y;
+			*pixel++ = (uint32_t)(255.0f * ((float)x / (float)buffer->width)) + yOffset;// y;
 
 		row += buffer->pitch;
 	}

@@ -5,7 +5,7 @@
 
 void outs(char *);
 void createBuffer(struct bufferInfo *, int, int);
-void updateAndRender(struct gameMemory *, struct bufferInfo *);
+void updateAndRender(struct gameMemory *, struct bufferInfo *, int);
 void displayBuffer(struct bufferInfo *, HDC, int, int);
 void loadXInput(void);
 
