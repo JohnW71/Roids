@@ -1,6 +1,9 @@
 #pragma once
 
-#include <windows.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+#define Pi32 3.14159265359f
 
 // #define ASTEROID_MAX_COUNT 4
 // #define ASTEROID_MAX_DIAMETER 64
@@ -20,15 +23,27 @@
 
 void outs(char *);
 //void shipConfig(void);
-void fillBuffer(struct bufferInfo *, int);
+void outputSound(struct gameSoundOutputBuffer *, int);
+void fillBuffer(struct gameDisplayBuffer *, int);
 
-struct bufferInfo
+struct gameDisplayBuffer
 {
-	BITMAPINFO info;
 	void *memory;
 	int width;
 	int height;
 	int pitch;
+};
+
+struct gameSoundOutputBuffer
+{
+	int samplesPerSecond;
+	int sampleCount;
+	int16_t *samples;
+};
+
+struct gameState
+{
+	int toneHz;
 };
 
 struct gameMemory

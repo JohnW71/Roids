@@ -1,8 +1,12 @@
+#include <math.h> // sinf
 #include <stdint.h>
 #include <stdbool.h>
 #include "roids.h"
 
-void updateAndRender(struct gameMemory *memory, struct bufferInfo *buffer, int yOffset)
+void updateAndRender(struct gameMemory *memory, 
+					struct gameDisplayBuffer *buffer,
+					struct gameSoundOutputBuffer *soundBuffer,
+					int yOffset)
 {
 	if (!memory->isInitialized)
 	{
@@ -10,10 +14,31 @@ void updateAndRender(struct gameMemory *memory, struct bufferInfo *buffer, int y
 		return;
 	}
 
+	struct gameState *state = (struct gameState *)memory;
+	state->toneHz = 1000;
+	outputSound(soundBuffer, state->toneHz);
 	fillBuffer(buffer, yOffset);
 }
 
-static void fillBuffer(struct bufferInfo *buffer, int yOffset)
+static void outputSound(struct gameSoundOutputBuffer *soundBuffer, int toneHz)
+{
+	static float tSine;
+	int16_t toneVolume = 3000;
+	int wavePeriod = soundBuffer->samplesPerSecond / toneHz;
+	int16_t *sampleOut = soundBuffer->samples;
+
+	for (int sampleIndex = 0; sampleIndex < soundBuffer->sampleCount; ++sampleIndex)
+	{
+		float sineValue = sinf(tSine);
+		int16_t sampleValue = (int16_t)(sineValue * toneVolume);
+		*sampleOut++ = sampleValue;
+		*sampleOut++ = sampleValue;
+
+		tSine += 2.0f * Pi32 * 1.0f / (float)wavePeriod;
+	}
+}
+
+static void fillBuffer(struct gameDisplayBuffer *buffer, int yOffset)
 {
 	uint8_t *row = (uint8_t *)buffer->memory;
 

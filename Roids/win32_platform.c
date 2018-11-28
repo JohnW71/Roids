@@ -5,27 +5,30 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <xinput.h>
+#include <dsound.h>
 
 #include "win32_platform.h"
 #include "roids.h"
 
-struct bufferInfo backBuffer, frontBuffer;
-
-//int XOffset;
-int yOffset;
+struct displayBuffer backBuffer;
+struct gameDisplayBuffer gameBuffer;
+int yOffset; //TODO remove this
 
 static bool running = true;
 static char logFile[] = "log.txt";
+static LPDIRECTSOUNDBUFFER secondaryBuffer;
 
 // manual function definitions to avoid requiring xinput lib during build or failing if it's missing
 #define XInputGetState XInputGetState_
 #define XInputSetState XInputSetState_
 #define X_INPUT_GET_STATE(name) DWORD WINAPI name(DWORD dwUserIndex, XINPUT_STATE *pState)
 #define X_INPUT_SET_STATE(name) DWORD WINAPI name(DWORD dwUserIndex, XINPUT_VIBRATION *pVibration)
+#define DIRECT_SOUND_CREATE(name) HRESULT WINAPI name(LPCGUID pcGuidDevice, LPDIRECTSOUND *ppDS, LPUNKNOWN pUnkOuter)
 
 // function typedefs
 typedef X_INPUT_GET_STATE(x_input_get_state);
 typedef X_INPUT_SET_STATE(x_input_set_state);
+typedef DIRECT_SOUND_CREATE(direct_sound_create);
 
 // stubs to do nothing if called unexpectedly
 X_INPUT_GET_STATE(XInputGetStateStub)
@@ -91,6 +94,20 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		return 0;
 	}
 
+	// initialize sound
+	struct soundOutput soundOutput = {0};
+	soundOutput.samplesPerSecond = 48000;
+	soundOutput.bytesPerSample = sizeof(int16_t) * 2;
+	soundOutput.secondaryBufferSize = soundOutput.samplesPerSecond * soundOutput.bytesPerSample;
+	soundOutput.latencySampleCount = soundOutput.samplesPerSecond / 15;
+	initDSound(hwnd, soundOutput.samplesPerSecond, soundOutput.secondaryBufferSize);
+	clearSoundBuffer(&soundOutput);
+	secondaryBuffer->lpVtbl->Play(secondaryBuffer, 0, 0, DSBPLAY_LOOPING);
+
+	//TODO pool with bitmap VirtualAlloc
+	int16_t *samples = (int16_t *)VirtualAlloc(0, soundOutput.secondaryBufferSize,
+												MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+
 	// reserve memory block
 	struct gameMemory memory = {0};
 	memory.storageSize = 1073741824; // 1GB
@@ -144,7 +161,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 				int16_t stickX = pad->sThumbLX;
 				int16_t stickY = pad->sThumbLY;
 
-				//XOffset += stickX >> 12;
 				yOffset += stickY >> 12;
 
 				if (aButton)
@@ -168,16 +184,56 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 			}
 		}
 
+		DWORD byteToLock = 0;
+		DWORD targetCursor = 0;
+		DWORD bytesToWrite = 0;
+		DWORD playCursor = 0;
+		DWORD writeCursor = 0;
+		bool soundIsValid = false;
+
+		//TODO tighten up sound logic so that we know where we should be writing to and can anticipate the time spent in the game update.
+		if (SUCCEEDED(secondaryBuffer->lpVtbl->GetCurrentPosition(secondaryBuffer, &playCursor, &writeCursor)))
+		{
+			byteToLock = ((soundOutput.runningSampleIndex * soundOutput.bytesPerSample) %
+			soundOutput.secondaryBufferSize);
+
+			targetCursor = ((playCursor +
+			(soundOutput.latencySampleCount * soundOutput.bytesPerSample)) %
+			soundOutput.secondaryBufferSize);
+
+			if (byteToLock > targetCursor)
+			{
+				bytesToWrite = (soundOutput.secondaryBufferSize - byteToLock);
+				bytesToWrite += targetCursor;
+			}
+			else
+			{
+				bytesToWrite = targetCursor - byteToLock;
+			}
+
+			soundIsValid = true;
+		}
+
+		struct gameSoundOutputBuffer soundBuffer = {0};
+		soundBuffer.samplesPerSecond = soundOutput.samplesPerSecond;
+		soundBuffer.sampleCount = bytesToWrite / soundOutput.bytesPerSample;
+		soundBuffer.samples = samples;
 
 		// update and display buffer
 		HDC deviceContext = GetDC(hwnd);
-		frontBuffer.info = backBuffer.info;
-		frontBuffer.memory = backBuffer.memory;
-		frontBuffer.width = backBuffer.width;
-		frontBuffer.height = backBuffer.height;
-		frontBuffer.pitch = backBuffer.pitch;
-		updateAndRender(&memory, &backBuffer, yOffset);
-		displayBuffer(&frontBuffer, deviceContext, WINDOW_WIDTH, WINDOW_HEIGHT);
+		gameBuffer.memory = backBuffer.memory;
+		gameBuffer.width = backBuffer.width;
+		gameBuffer.height = backBuffer.height;
+		gameBuffer.pitch = backBuffer.pitch;
+		updateAndRender(&memory, &gameBuffer, &soundBuffer, yOffset);
+
+		// DirectSound output test
+		if (soundIsValid)
+		{
+			fillSoundBuffer(&soundOutput, byteToLock, bytesToWrite, &soundBuffer);
+		}
+
+		displayBuffer(&backBuffer, deviceContext, WINDOW_WIDTH, WINDOW_HEIGHT);
 		ReleaseDC(hwnd, deviceContext);
 
 		// get and display end counts
@@ -193,7 +249,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 		char buf[256];
 		sprintf(buf, "%.02fms, %.02f fps, %.02f megacycles per frame\n", msPerFrame, FPS, MCPF);
-		OutputDebugString(buf);
+		OutputDebugStringA(buf);
 
 		lastCounter = endCounter;
 		lastCycleCount = endCycleCount;
@@ -216,7 +272,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 			PAINTSTRUCT paint;
 			HDC deviceContext = BeginPaint(hwnd, &paint);
-			displayBuffer(&frontBuffer, deviceContext, WINDOW_WIDTH, WINDOW_HEIGHT);
+			displayBuffer(&backBuffer, deviceContext, WINDOW_WIDTH, WINDOW_HEIGHT);
 			EndPaint(hwnd, &paint);
 			break;
 		}
@@ -228,31 +284,31 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			{
 				case VK_LEFT:
 					outs("left");
-					OutputDebugString("left\n");
+					OutputDebugStringA("left\n");
 					break;
 				case VK_RIGHT:
 					outs("right");
-					OutputDebugString("right\n");
+					OutputDebugStringA("right\n");
 					break;
 				case VK_UP:
 					outs("up");
-					OutputDebugString("up\n");
+					OutputDebugStringA("up\n");
 					break;
 				case VK_DOWN:
 					outs("down");
-					OutputDebugString("down\n");
+					OutputDebugStringA("down\n");
 					break;
 				case VK_SPACE:
 					outs("space");
-					OutputDebugString("space\n");
+					OutputDebugStringA("space\n");
 					break;
 				case VK_CONTROL:
 					outs("CTRL");
-					OutputDebugString("CTRL\n");
+					OutputDebugStringA("CTRL\n");
 					break;
 				case VK_ESCAPE:
 					outs("ESC");
-					OutputDebugString("ESC\n");
+					OutputDebugStringA("ESC\n");
 					DestroyWindow(hwnd);
 					break;
 			}
@@ -261,7 +317,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			if ((wParam == VK_F4) && altKeyWasDown)
 			{
 				outs("ALT F4");
-				OutputDebugString("ALT F4\n");
+				OutputDebugStringA("ALT F4\n");
 				DestroyWindow(hwnd);
 			}
 			break;
@@ -289,7 +345,7 @@ void outs(char *s)
 	fclose(lf);
 }
 
-static void createBuffer(struct bufferInfo *buffer, int width, int height)
+static void createBuffer(struct displayBuffer *buffer, int width, int height)
 {
 	if (buffer->memory)
 		VirtualFree(buffer->memory, 0, MEM_RELEASE);
@@ -310,7 +366,7 @@ static void createBuffer(struct bufferInfo *buffer, int width, int height)
 	buffer->pitch = width * bytesPerPixel;
 }
 
-static void displayBuffer(struct bufferInfo *buffer, HDC deviceContext, int width, int height)
+static void displayBuffer(struct displayBuffer *buffer, HDC deviceContext, int width, int height)
 {
 	StretchDIBits(deviceContext,
 					0, 0,
@@ -349,5 +405,142 @@ static void loadXInput(void)
 	else
 	{
 		outs("XInput not loaded");
+	}
+}
+
+static void initDSound(HWND hwnd, int32_t samplesPerSecond, int32_t bufferSize)
+{
+	// load the library
+	HMODULE DSoundLibrary = LoadLibraryA("dsound.dll");
+	if(DSoundLibrary)
+	{
+		// get a directSound object! - cooperative
+		direct_sound_create *directSoundCreate = (direct_sound_create *)GetProcAddress(DSoundLibrary, "DirectSoundCreate");
+
+		//TODO double-check that this works on XP - DirectSound8 or 7??
+		LPDIRECTSOUND directSound;
+		if (directSoundCreate && SUCCEEDED(directSoundCreate(0, &directSound, 0)))
+		{
+			WAVEFORMATEX waveFormat = {0};
+			waveFormat.wFormatTag = WAVE_FORMAT_PCM;
+			waveFormat.nChannels = 2;
+			waveFormat.nSamplesPerSec = samplesPerSecond;
+			waveFormat.wBitsPerSample = 16;
+			waveFormat.nBlockAlign = (waveFormat.nChannels * waveFormat.wBitsPerSample) / 8;
+			waveFormat.nAvgBytesPerSec = waveFormat.nSamplesPerSec*waveFormat.nBlockAlign;
+			waveFormat.cbSize = 0;
+
+			if (SUCCEEDED(directSound->lpVtbl->SetCooperativeLevel(directSound, hwnd, DSSCL_PRIORITY)))
+			{
+				DSBUFFERDESC bufferDescription = {0};
+				bufferDescription.dwSize = sizeof(bufferDescription);
+				bufferDescription.dwFlags = DSBCAPS_PRIMARYBUFFER;
+
+				// create a primary buffer
+				LPDIRECTSOUNDBUFFER primaryBuffer;
+				if (SUCCEEDED(directSound->lpVtbl->CreateSoundBuffer(directSound, &bufferDescription, &primaryBuffer, 0)))
+				{
+					HRESULT error = primaryBuffer->lpVtbl->SetFormat(primaryBuffer, &waveFormat);
+					if (SUCCEEDED(error))
+					{
+						// we have set the format
+						OutputDebugStringA("Primary buffer format was set.\n");
+					}
+					else
+					{
+						// Diagnostic
+					}
+				}
+				else
+				{
+					// Diagnostic
+				}
+			}
+			else
+			{
+				// Diagnostic
+			}
+
+			//TODO DSBCAPS_GETCURRENTPOSITION2
+			DSBUFFERDESC bufferDescription = {0};
+			bufferDescription.dwSize = sizeof(bufferDescription);
+			bufferDescription.dwFlags = 0;
+			bufferDescription.dwBufferBytes = bufferSize;
+			bufferDescription.lpwfxFormat = &waveFormat;
+			HRESULT Error = directSound->lpVtbl->CreateSoundBuffer(directSound, &bufferDescription, &secondaryBuffer, 0);
+			if (SUCCEEDED(Error))
+			{
+				OutputDebugStringA("Secondary buffer created successfully.\n");
+			}
+		}
+		else
+		{
+			// Diagnostic
+		}
+	}
+	else
+	{
+		// Diagnostic
+	}
+}
+
+static void clearSoundBuffer(struct soundOutput *soundOutput)
+{
+	VOID *region1;
+	DWORD region1Size;
+	VOID *region2;
+	DWORD region2Size;
+	if (SUCCEEDED(secondaryBuffer->lpVtbl->Lock(secondaryBuffer, 0, soundOutput->secondaryBufferSize,
+												&region1, &region1Size,
+												&region2, &region2Size, 0)))
+	{
+		//TODO assert that region1Size/region2Size is valid
+		uint8_t *destSample = (uint8_t *)region1;
+
+		for (DWORD byteIndex = 0; byteIndex < region1Size; ++byteIndex)
+			*destSample++ = 0;
+
+		destSample = (uint8_t *)region2;
+
+		for (DWORD byteIndex = 0; byteIndex < region2Size; ++byteIndex)
+			*destSample++ = 0;
+
+		secondaryBuffer->lpVtbl->Unlock(secondaryBuffer, region1, region1Size, region2, region2Size);
+	}
+}
+
+static void fillSoundBuffer(struct soundOutput *soundOutput, DWORD byteToLock,
+							DWORD bytesToWrite, struct gameSoundOutputBuffer *sourceBuffer)
+{
+	VOID *region1;
+	DWORD region1Size;
+	VOID *region2;
+	DWORD region2Size;
+	if (SUCCEEDED(secondaryBuffer->lpVtbl->Lock(secondaryBuffer, byteToLock, bytesToWrite,
+												&region1, &region1Size,
+												&region2, &region2Size, 0)))
+	{
+		DWORD region1SampleCount = region1Size/soundOutput->bytesPerSample;
+		int16_t *destSample = (int16_t *)region1;
+		int16_t *sourceSample = sourceBuffer->samples;
+
+		for (DWORD sampleIndex = 0; sampleIndex < region1SampleCount; ++sampleIndex)
+		{
+			*destSample++ = *sourceSample++;
+			*destSample++ = *sourceSample++;
+			++soundOutput->runningSampleIndex;
+		}
+
+		DWORD region2SampleCount = region2Size/soundOutput->bytesPerSample;
+		destSample = (int16_t *)region2;
+
+		for (DWORD sampleIndex = 0; sampleIndex < region2SampleCount; ++sampleIndex)
+		{
+			*destSample++ = *sourceSample++;
+			*destSample++ = *sourceSample++;
+			++soundOutput->runningSampleIndex;
+		}
+
+		secondaryBuffer->lpVtbl->Unlock(secondaryBuffer, region1, region1Size, region2, region2Size);
 	}
 }
