@@ -116,6 +116,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	{
 		outs("Memory allocation failure");
 		MessageBox(NULL, "Memory allocation failure", "Error", MB_ICONEXCLAMATION | MB_OK);
+		VirtualFree(samples, 0, MEM_RELEASE);
 		return 0;
 	}
 	memory.isInitialized = true;
@@ -161,7 +162,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 				int16_t stickX = pad->sThumbLX;
 				int16_t stickY = pad->sThumbLY;
 
-				yOffset += stickY >> 12;
+				yOffset += stickY / 4096;
 
 				if (aButton)
 				{

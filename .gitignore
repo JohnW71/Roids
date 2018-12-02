@@ -260,3 +260,7 @@ paket-files/
 __pycache__/
 *.pyc
 /Roids/log.txt
+
+# VS Code files
+.vscode/
+build.bat
