@@ -3,12 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.102
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Roids", "Roids\Roids.vcxproj", "{853B9FF7-7067-42E9-BAC3-EA1FB8B9E1F9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Platforms", "Platforms\Platforms.vcxproj", "{853B9FF7-7067-42E9-BAC3-EA1FB8B9E1F9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C8C2B8DE-A9BB-475C-8725-87F0CAFD76C0} = {C8C2B8DE-A9BB-475C-8725-87F0CAFD76C0}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F7CBBA43-37C4-4DEA-9A75-CFC8C9212D3E}"
 	ProjectSection(SolutionItems) = preProject
-		Roids\log.txt = Roids\log.txt
+		Platforms\log.txt = Platforms\log.txt
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GameDLL", "GameDLL\GameDLL.vcxproj", "{C8C2B8DE-A9BB-475C-8725-87F0CAFD76C0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +31,14 @@ Global
 		{853B9FF7-7067-42E9-BAC3-EA1FB8B9E1F9}.Release|x64.Build.0 = Release|x64
 		{853B9FF7-7067-42E9-BAC3-EA1FB8B9E1F9}.Release|x86.ActiveCfg = Release|Win32
 		{853B9FF7-7067-42E9-BAC3-EA1FB8B9E1F9}.Release|x86.Build.0 = Release|Win32
+		{C8C2B8DE-A9BB-475C-8725-87F0CAFD76C0}.Debug|x64.ActiveCfg = Debug|x64
+		{C8C2B8DE-A9BB-475C-8725-87F0CAFD76C0}.Debug|x64.Build.0 = Debug|x64
+		{C8C2B8DE-A9BB-475C-8725-87F0CAFD76C0}.Debug|x86.ActiveCfg = Debug|Win32
+		{C8C2B8DE-A9BB-475C-8725-87F0CAFD76C0}.Debug|x86.Build.0 = Debug|Win32
+		{C8C2B8DE-A9BB-475C-8725-87F0CAFD76C0}.Release|x64.ActiveCfg = Release|x64
+		{C8C2B8DE-A9BB-475C-8725-87F0CAFD76C0}.Release|x64.Build.0 = Release|x64
+		{C8C2B8DE-A9BB-475C-8725-87F0CAFD76C0}.Release|x86.ActiveCfg = Release|Win32
+		{C8C2B8DE-A9BB-475C-8725-87F0CAFD76C0}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
