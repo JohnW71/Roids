@@ -75,20 +75,28 @@ static void outputSound(struct gameState *state, struct gameSoundOutputBuffer *s
 // 	}
 // }
 
-static int32_t roundFloatToInt32(float f)
+inline int32_t roundFloatToInt32(float f)
 {
 	int32_t result = (int32_t)(f + 0.5f);
 	return result;
 }
 
-static int32_t roundFloatToUInt32(float f)
+inline int32_t roundFloatToUInt32(float f)
 {
 	uint32_t result = (uint32_t)(f + 0.5f);
 	return result;
 }
 
-static void drawRectangle(struct gameDisplayBuffer *buffer, float fMinX, float fMinY,
-							float fMaxX, float fMaxY, float R, float G, float B)
+// inline int32_t truncateFloatToInt32(float f)
+// {
+// 	int32_t result = (int32_t)f;
+// 	return result;
+// }
+
+static void drawRectangle(struct gameDisplayBuffer *buffer,
+						  float fMinX, float fMinY,
+						  float fMaxX, float fMaxY,
+						  float R, float G, float B)
 {
 	int32_t minX = roundFloatToInt32(fMinX);
 	int32_t minY = roundFloatToInt32(fMinY);
@@ -118,11 +126,19 @@ static void drawRectangle(struct gameDisplayBuffer *buffer, float fMinX, float f
 		row += buffer->pitch;
 	}
 }
-//-EXPORT:gameGetSoundSamples -EXPORT:gameUpdateAndRender
+
+//extern "C" GAME_GET_SOUND_SAMPLES(gameGetSoundSamples)
+//void gameGetSoundSamples(struct threadContext *thread, struct gameMemory *memory, struct gameSoundOutputBuffer *soundBuffer)
+//#pragma comment(linker, "/export:gameGetSoundSamples")
+GAME_GET_SOUND_SAMPLES(gameGetSoundSamples)
+{
+	struct gameState *state = (struct gameState *)memory->permanentStorage;
+	outputSound(state, soundBuffer, 400);
+}
 
 //extern "C" GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 //void gameUpdateAndRender(struct threadContext *thread, struct gameMemory *memory, struct gameInput *input, struct gameDisplayBuffer *buffer)
-#pragma comment(linker, "/export:gameUpdateAndRender")
+//#pragma comment(linker, "/export:gameUpdateAndRender")
 GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 {
 	// check that difference between addresses of first & last buttons matches intended count
@@ -136,8 +152,8 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	{
 		// state->toneHz = 512; //1000
 		// state->tSine = 0.0f;
-		// state->playerX = 100;
-		// state->playerY = 100;
+		state->playerX = 150;
+		state->playerY = 150;
 		memory->isInitialized = true;
 	}
 
@@ -168,8 +184,12 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 			dPlayerX *= 64.0f;
 			dPlayerY *= 64.0f;
 
-			state->playerX += input->dtForFrame * dPlayerX;
-			state->playerY += input->dtForFrame * dPlayerY;
+			float newPlayerX = state->playerX + input->dtForFrame*dPlayerX;
+			float newPlayerY = state->playerY + input->dtForFrame*dPlayerY;
+
+			// should check for valid movement here
+			state->playerX = newPlayerX;
+			state->playerY = newPlayerY;
 		}
 	}
 
@@ -181,8 +201,8 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		{1, 1, 1, 1,  1, 1, 1, 1,  0, 1, 1, 1,  1, 1, 1, 1, 1},
 		{1, 1, 0, 0,  0, 1, 0, 0,  0, 0, 0, 0,  0, 1, 0, 0, 1},
 		{1, 1, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0,  0, 1, 1, 0, 1},
-		{1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0, 1},
-		{0, 0, 0, 0,  0, 1, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0, 0},
+		{1, 0, 0, 0,  0, 0, 0, 0,  1, 1, 0, 0,  0, 0, 0, 0, 1},
+		{0, 0, 0, 0,  0, 1, 0, 0,  1, 1, 0, 0,  0, 0, 0, 0, 0},
 		{1, 1, 0, 0,  0, 1, 0, 0,  1, 0, 0, 0,  0, 1, 1, 0, 1},
 		{1, 0, 0, 0,  0, 1, 0, 0,  1, 0, 0, 0,  1, 1, 0, 0, 1},
 		{1, 1, 1, 1,  1, 1, 0, 0,  0, 0, 0, 0,  0, 1, 0, 0, 1},
@@ -194,27 +214,30 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	float tileWidth = 60;
 	float tileHeight = 60;
 
-	drawRectangle(buffer, 0.0f, 0.0f, (float)buffer->width, (float)buffer->height, 1.0f, 0.0f, 0.1f);
+	// set background
+	drawRectangle(buffer, 0.0f, 0.0f, (float)buffer->width, (float)buffer->height, 0.7f, 0.7f, 0.7f);
 
-	for (int row = 0; row < 9; ++row)
-	{
-		for (int col = 0; col < 17; ++col)
-		{
-			uint32_t tileID = tileMap[row][col];
-			float grey = 0.5f;
-			if (tileID == 1)
-				grey = 1.0f;
+	// draw tilemap
+	//for (int row = 0; row < 9; ++row)
+	//{
+	//	for (int col = 0; col < 17; ++col)
+	//	{
+	//		uint32_t tileID = tileMap[row][col];
+	//		float grey = 0.5f;
+	//		if (tileID == 1)
+	//			grey = 1.0f;
 
-			float minX = upperLeftX + ((float)col) * tileWidth;
-			float minY = upperLeftY + ((float)row) * tileHeight;
-			float maxX = minX + tileWidth;
-			float maxY = minY + tileHeight;
-			drawRectangle(buffer, minX, minY, maxX, maxY, grey, grey, grey);
-		}
-	}
+	//		float minX = upperLeftX + ((float)col) * tileWidth;
+	//		float minY = upperLeftY + ((float)row) * tileHeight;
+	//		float maxX = minX + tileWidth;
+	//		float maxY = minY + tileHeight;
+	//		drawRectangle(buffer, minX, minY, maxX, maxY, grey, grey, grey);
+	//	}
+	//}
 
+	// draw player
 	float playerR = 1.0f;
-	float playerG = 1.0f;
+	float playerG = 0.0f;
 	float playerB = 0.0f;
 	float playerWidth = 0.75f * tileWidth;
 	float playerHeight = tileHeight;
@@ -225,13 +248,97 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 				  playerLeft + playerWidth,
 				  playerTop + playerHeight,
 				  playerR, playerG, playerB);
+
+	// all of row 0
+	//int32_t *dot = (int32_t *)buffer->memory;
+	//for (int i = 0; i < WINDOW_WIDTH; ++i)
+	//	*dot++  = BLUE;
+
+	int32_t *dot = (int32_t *)buffer->memory;
+
+	int rows = 5;
+	int cols = 103;
+
+	for (int j = 0; j < rows; ++j)
+	{
+		int col_width = 5;
+		int gap = 5;
+
+		for (int i = 0; i < cols; ++i)
+		{
+			for (int i = 0; i < col_width; ++i)
+				*dot++ = WHITE;
+			for (int i = 0; i < gap; ++i)
+				*dot++;
+		}
+		dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
+	}
+
+	// blue line
+	for (int i = 0; i < WINDOW_WIDTH; ++i)
+		*dot++ = BLUE;
+	//dot += (WINDOW_WIDTH - 100);
+
+	for (int j = 0; j < rows; ++j)
+	{
+		int col_width = 5;
+		int gap = 5;
+
+		for (int i = 0; i < cols; ++i)
+		{
+			for (int i = 0; i < col_width; ++i)
+				*dot++ = WHITE;
+			for (int i = 0; i < gap; ++i)
+				*dot++;
+		}
+		dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
+	}
+
+
+
+	// blue line
+	for (int i = 0; i < WINDOW_WIDTH; ++i)
+		*dot++ = BLUE;
+	//dot += (WINDOW_WIDTH - 100);
+
+	// diagonal
+	float col = 0.0f;
+	uint8_t *row = (uint8_t *)buffer->memory;
+	for (int y = 0; y < WINDOW_HEIGHT; ++y)
+	{
+		col = (y / 600.0f) * WINDOW_WIDTH;
+		uint32_t *pixel = (uint32_t *)row;
+		pixel += ((uint32_t) col);
+		*pixel++ = GREEN;
+		row += buffer->pitch;
+	}
+
+	blob(buffer, 0, 0, RED);
+	blob(buffer, 10, 10, GREEN);
+	blob(buffer, 20, 20, BLUE);
+	blob(buffer, 30, 30, WHITE);
+	blob(buffer, 40, 40, BLACK);
+	blob(buffer, (WINDOW_WIDTH / 2) / COL_WIDTH, (WINDOW_HEIGHT / 2) / ROW_HEIGHT, MAGENTA);
+
+	for (int i = 60; i < 100; ++i)
+		blob(buffer, i, i, YELLOW);
+	for (int i = 100; i < 200; ++i)
+		blob(buffer, i, 25, CYAN);
 }
 
-//extern "C" GAME_GET_SOUND_SAMPLES(gameGetSoundSamples)
-//void gameGetSoundSamples(struct threadContext *thread, struct gameMemory *memory, struct gameSoundOutputBuffer *soundBuffer)
-#pragma comment(linker, "/export:gameGetSoundSamples")
-GAME_GET_SOUND_SAMPLES(gameGetSoundSamples)
+static void blob(struct gameDisplayBuffer *buffer, int col, int row, int32_t colour)
 {
-	struct gameState *state = (struct gameState *)memory->permanentStorage;
-	outputSound(state, soundBuffer, 400);
+	if (col >= MAX_COLS || row >= MAX_ROWS)
+		return;
+
+	int32_t *pixel = (int32_t *)buffer->memory;
+	pixel += (row * WINDOW_WIDTH * ROW_HEIGHT) + (col * COL_WIDTH);
+
+	for (int y = 0; y < ROW_HEIGHT; ++y)
+	{
+		for (int x = 0; x < COL_WIDTH; ++x)
+			*pixel++ = colour;
+
+		pixel += (WINDOW_WIDTH - COL_WIDTH);
+	}
 }

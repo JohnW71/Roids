@@ -11,11 +11,7 @@
 #include "win32_platform.h"
 #include "..\GameDLL\roids.h"
 
-//TODO test the pragma statement instead of command line
-//TODO clean up and check in
-
 static struct win32displayBuffer backBuffer;
-// static int64_t perfCountFrequency;
 static bool running;
 static bool paused;
 static char logFile[] = "log.txt";
@@ -104,13 +100,27 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		return 0;
 	}
 
-	HWND hwnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW,
-								wc.lpszClassName,
-								"Roids",
-								WS_BORDER | WS_CAPTION | WS_VISIBLE, // WS_EX_TOPMOST
-								CW_USEDEFAULT, CW_USEDEFAULT,
-								WINDOW_WIDTH, WINDOW_HEIGHT,
-								NULL, NULL,	hInstance, NULL);
+	//HWND hwnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW,
+	//							wc.lpszClassName,
+	//							"Roids",
+	//							WS_BORDER | WS_CAPTION | WS_VISIBLE, // WS_EX_TOPMOST
+	//							CW_USEDEFAULT, CW_USEDEFAULT,
+	//							WINDOW_WIDTH, WINDOW_HEIGHT,
+	//							NULL, NULL,	hInstance, NULL);
+	HWND hwnd =
+		CreateWindowExA(
+			0, // WS_EX_TOPMOST|WS_EX_LAYERED,
+			wc.lpszClassName,
+			"Handmade Hero",
+			WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			CW_USEDEFAULT,
+			0,
+			0,
+			hInstance,
+			0);
 
 	if (!hwnd)
 	{
@@ -127,7 +137,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		refreshHz = refreshRate;
 	float gameUpdateHz = refreshHz / 2.0f; // aim for half of refresh rate
 	float targetSecondsPerFrame = 1.0f / gameUpdateHz;
-	//TODO get the usage for this from day 27?
 
 	// initialize sound
 	struct win32soundOutput soundOutput = {0};
@@ -141,13 +150,13 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 	int16_t *samples = (int16_t *)VirtualAlloc(0, soundOutput.secondaryBufferSize,
 												MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
-	//if (!samples)
-	//{
-	//	outs("Memory allocation failure: samples");
-	//	MessageBox(NULL, "Memory allocation failure", "Error", MB_ICONEXCLAMATION | MB_OK);
-	//	VirtualFree(samples, 0, MEM_RELEASE);
-	//	return 0;
-	//}
+	if (!samples)
+	{
+		outs("Memory allocation failure: samples");
+		MessageBox(NULL, "Memory allocation failure", "Error", MB_ICONEXCLAMATION | MB_OK);
+		VirtualFree(samples, 0, MEM_RELEASE);
+		return 0;
+	}
 
 	// reserve memory block
 #ifdef DEV_MODE
@@ -161,16 +170,15 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	state.totalSize = memory.permanentStorageSize + memory.transientStorageSize;
 	state.gameMemoryBlock = VirtualAlloc(baseAddress, (size_t)state.totalSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 
-	//if (!state.gameMemoryBlock)
-	//{
-	//	outs("Memory allocation failure: game memory block");
-	//	MessageBox(NULL, "Memory allocation failure", "Error", MB_ICONEXCLAMATION | MB_OK);
-	//	VirtualFree(state.gameMemoryBlock, 0, MEM_RELEASE);
-	//	VirtualFree(samples, 0, MEM_RELEASE);
-	//	return 0;
-	//}
+	if (!state.gameMemoryBlock)
+	{
+		outs("Memory allocation failure: game memory block");
+		MessageBox(NULL, "Memory allocation failure", "Error", MB_ICONEXCLAMATION | MB_OK);
+		VirtualFree(state.gameMemoryBlock, 0, MEM_RELEASE);
+		VirtualFree(samples, 0, MEM_RELEASE);
+		return 0;
+	}
 
-	memory.isInitialized = true;
 	memory.permanentStorage = state.gameMemoryBlock;
 	memory.transientStorage = ((uint8_t *)memory.permanentStorage + memory.permanentStorageSize);
 
@@ -178,11 +186,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	struct gameInput input[2] = {0};
 	struct gameInput *newInput = &input[0];
 	struct gameInput *oldInput = &input[1];
-	newInput->secondsToAdvanceOverUpdate = targetSecondsPerFrame;
 	LARGE_INTEGER lastCounter = getWallClock();
 	LARGE_INTEGER flipWallClock = getWallClock();
-	int debugTimeMarkerIndex = 0;
-	struct win32debugTimeMarker debugTimeMarkers[30] = {0};
+	// int debugTimeMarkerIndex = 0;
+	// struct win32debugTimeMarker debugTimeMarkers[30] = {0};
 	DWORD audioLatencyBytes = 0;
 	float audioLatencySeconds = 0;
 	bool soundIsValid = false;
@@ -195,14 +202,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 	while (running)
 	{
-		// while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
-		// {
-		// 	if (msg.message == WM_QUIT)
-		// 		running = false;
-
-		// 	TranslateMessage(&msg);
-		// 	DispatchMessageA(&msg);
-		// }
+		newInput->dtForFrame = targetSecondsPerFrame;
 
 		// reload DLL if time changed
 		FILETIME newDLLwriteTime = getLastWriteTime(srcGameCodeDLLpath);
@@ -261,6 +261,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 					// square deadzone
 					newController->stickAverageX = processXinputStickValue(pad->sThumbLX, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
 					newController->stickAverageY = processXinputStickValue(pad->sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+
 					if ((newController->stickAverageX != 0.0f) || (newController->stickAverageY != 0.0f))
 						newController->isAnalog = true;
 
@@ -324,7 +325,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 			gameBuffer.bytesPerPixel = backBuffer.bytesPerPixel;
 
 			// update display
-			//updateAndRender(&memory, &gameBuffer, &soundBuffer, yOffset);
 			if (game.updateAndRender)
 				game.updateAndRender(&thread, &memory, newInput, &gameBuffer);
 			else
@@ -353,6 +353,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 				if (safeWriteCursor < playCursor)
 					safeWriteCursor += soundOutput.secondaryBufferSize;
+
 				assert(safeWriteCursor >= playCursor);
 				safeWriteCursor += soundOutput.safetyBytes;
 
@@ -386,12 +387,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 					outs("game.getSoundSamples is null!");
 
 				// audio debugging info
-				struct win32debugTimeMarker *marker = &debugTimeMarkers[debugTimeMarkerIndex];
-				marker->outputPlayCursor = playCursor;
-				marker->outputWriteCursor = writeCursor;
-				marker->outputLocation = byteToLock;
-				marker->outputByteCount = bytesToWrite;
-				marker->expectedFlipPlayCursor = expectedFrameBoundaryByte;
+				// struct win32debugTimeMarker *marker = &debugTimeMarkers[debugTimeMarkerIndex];
+				// marker->outputPlayCursor = playCursor;
+				// marker->outputWriteCursor = writeCursor;
+				// marker->outputLocation = byteToLock;
+				// marker->outputByteCount = bytesToWrite;
+				// marker->expectedFlipPlayCursor = expectedFrameBoundaryByte;
 
 				DWORD unwrappedWriteCursor = writeCursor;
 				if (unwrappedWriteCursor < playCursor)
@@ -408,6 +409,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 			LARGE_INTEGER workCounter = getWallClock();
 			float workSecondsElapsed = getSecondsElapsed(lastCounter, workCounter, perfCountFrequency);
 			float secondsElapsedForFrame = workSecondsElapsed;
+
 			if (secondsElapsedForFrame < targetSecondsPerFrame)
 			{
 				if (sleepIsGranular)
@@ -444,17 +446,17 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 			flipWallClock = getWallClock();
 
 			// debug code
-			{
-				DWORD playCursor2;
-				DWORD writeCursor2;
-				if (secondaryBuffer->lpVtbl->GetCurrentPosition(secondaryBuffer, &playCursor2, &writeCursor2) == DS_OK)
-				{
-					assert(debugTimeMarkerIndex < arrayCount(debugTimeMarkers));
-					struct win32debugTimeMarker *marker = &debugTimeMarkers[debugTimeMarkerIndex];
-					marker->flipPlayCursor = playCursor2;
-					marker->flipWriteCursor = writeCursor2;
-				}
-			}
+			// {
+			// 	DWORD playCursor2;
+			// 	DWORD writeCursor2;
+			// 	if (secondaryBuffer->lpVtbl->GetCurrentPosition(secondaryBuffer, &playCursor2, &writeCursor2) == DS_OK)
+			// 	{
+			// 		assert(debugTimeMarkerIndex < arrayCount(debugTimeMarkers));
+			// 		struct win32debugTimeMarker *marker = &debugTimeMarkers[debugTimeMarkerIndex];
+			// 		marker->flipPlayCursor = playCursor2;
+			// 		marker->flipWriteCursor = writeCursor2;
+			// 	}
+			// }
 
 			struct gameInput *temp = newInput;
 			newInput = oldInput;
@@ -478,9 +480,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 			//lastCounter = endCounter;
 			//lastCycleCount = endCycleCount;
 
-			++debugTimeMarkerIndex;
-			if (debugTimeMarkerIndex == arrayCount(debugTimeMarkers))
-				debugTimeMarkerIndex = 0;
+			// ++debugTimeMarkerIndex;
+			// if (debugTimeMarkerIndex == arrayCount(debugTimeMarkers))
+			// 	debugTimeMarkerIndex = 0;
 		}
 	}
 
@@ -659,6 +661,14 @@ static void createBuffer(struct win32displayBuffer *buffer, int width, int heigh
 // display stored bitmap info
 static void displayBuffer(struct win32displayBuffer *buffer, HDC deviceContext)//, int width, int height)
 {
+	//int offsetX = 10;
+	//int offsetY = 10;
+
+	//PatBlt(deviceContext, 0, 0, buffer->height, buffer->width, BLACKNESS);
+	//PatBlt(deviceContext, 0, OffsetY + Buffer->Height, WindowWidth, WindowHeight, BLACKNESS);
+	//PatBlt(deviceContext, 0, 0, OffsetX, WindowHeight, BLACKNESS);
+	//PatBlt(deviceContext, OffsetX + Buffer->Width, 0, WindowWidth, WindowHeight, BLACKNESS);
+
 	StretchDIBits(deviceContext,
 				  0, 0, buffer->width, buffer->height,
 				  0, 0, buffer->width, buffer->height,

@@ -3,6 +3,18 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+//#define WINDOW_WIDTH 160
+//#define WINDOW_HEIGHT 100
+//#define WINDOW_WIDTH 960
+//#define WINDOW_HEIGHT 540
+#define WINDOW_WIDTH 1030
+#define WINDOW_HEIGHT 600
+
+#define COL_WIDTH 4
+#define ROW_HEIGHT 4
+#define MAX_COLS (WINDOW_WIDTH / COL_WIDTH)
+#define MAX_ROWS (WINDOW_HEIGHT / ROW_HEIGHT)
+
 #define Pi32 3.14159265359f
 #define assert(expression) if(!(expression)) {*(int *)0 = 0;}
 #define arrayCount(array) (sizeof(array) / sizeof((array)[0]))
@@ -11,6 +23,16 @@
 #define megabytes(value) (kilobytes(value)*1024LL)
 #define gigabytes(value) (megabytes(value)*1024LL)
 #define terabytes(value) (gigabytes(value)*1024LL)
+
+// AA RR GG BB
+#define RED 0x00FF0000
+#define GREEN 0x0000FF00
+#define BLUE 0x000000FF
+#define CYAN 0x0000FFFF
+#define MAGENTA 0x00FF00FF
+#define YELLOW 0x00FFFF00
+#define WHITE 0x00FFFFFF
+#define BLACK 0x00000000
 
 // #define ASTEROID_MAX_COUNT 4
 // #define ASTEROID_MAX_DIAMETER 64
@@ -43,6 +65,7 @@ void outputSound(struct gameState *, struct gameSoundOutputBuffer *, int);
 // void renderPlayer(struct gameDisplayBuffer *, int, int);
 int32_t roundFloatToInt32(float);
 void drawRectangle(struct gameDisplayBuffer *, float, float, float, float, float, float, float);
+void blob(struct gameDisplayBuffer *buffer, int col, int row, int32_t colour);
 
 struct threadContext
 {
@@ -124,7 +147,6 @@ struct gameInput
 	struct gameButtonState mouseButtons[5];
 	int32_t mouseX, mouseY, mouseZ;
 	float dtForFrame;
-	float secondsToAdvanceOverUpdate;
 	struct gameControllerInput controllers[5];
 };
 
