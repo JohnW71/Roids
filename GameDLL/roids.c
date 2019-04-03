@@ -51,7 +51,6 @@ static void outputSound(struct gameState *state, struct gameSoundOutputBuffer *s
 // 	ship.speed = 0;
 // 	ship.acceleration = 0;
 // 	ship.lives = 3;
-// 	outs("Ship created");
 // }
 
 // static void renderPlayer(struct gameDisplayBuffer *buffer, int playerX, int playerY)
@@ -196,21 +195,21 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	//drawRectangle(buffer, 0.0f, 0.0f, (float)buffer->width, (float)buffer->height, 0x00FF00FF);
 	//drawRectangle(buffer, 10.0f, 10.0f, 40.0f, 40.0f, 0x0000FFFF);
 
-	uint32_t tileMap[9][17] =
-	{
-		{1, 1, 1, 1,  1, 1, 1, 1,  0, 1, 1, 1,  1, 1, 1, 1, 1},
-		{1, 1, 0, 0,  0, 1, 0, 0,  0, 0, 0, 0,  0, 1, 0, 0, 1},
-		{1, 1, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0,  0, 1, 1, 0, 1},
-		{1, 0, 0, 0,  0, 0, 0, 0,  1, 1, 0, 0,  0, 0, 0, 0, 1},
-		{0, 0, 0, 0,  0, 1, 0, 0,  1, 1, 0, 0,  0, 0, 0, 0, 0},
-		{1, 1, 0, 0,  0, 1, 0, 0,  1, 0, 0, 0,  0, 1, 1, 0, 1},
-		{1, 0, 0, 0,  0, 1, 0, 0,  1, 0, 0, 0,  1, 1, 0, 0, 1},
-		{1, 1, 1, 1,  1, 1, 0, 0,  0, 0, 0, 0,  0, 1, 0, 0, 1},
-		{1, 1, 1, 1,  1, 1, 1, 1,  0, 1, 1, 1,  1, 1, 1, 1, 1},
-	};
+	// uint32_t tileMap[9][17] =
+	// {
+	// 	{1, 1, 1, 1,  1, 1, 1, 1,  0, 1, 1, 1,  1, 1, 1, 1, 1},
+	// 	{1, 1, 0, 0,  0, 1, 0, 0,  0, 0, 0, 0,  0, 1, 0, 0, 1},
+	// 	{1, 1, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0,  0, 1, 1, 0, 1},
+	// 	{1, 0, 0, 0,  0, 0, 0, 0,  1, 1, 0, 0,  0, 0, 0, 0, 1},
+	// 	{0, 0, 0, 0,  0, 1, 0, 0,  1, 1, 0, 0,  0, 0, 0, 0, 0},
+	// 	{1, 1, 0, 0,  0, 1, 0, 0,  1, 0, 0, 0,  0, 1, 1, 0, 1},
+	// 	{1, 0, 0, 0,  0, 1, 0, 0,  1, 0, 0, 0,  1, 1, 0, 0, 1},
+	// 	{1, 1, 1, 1,  1, 1, 0, 0,  0, 0, 0, 0,  0, 1, 0, 0, 1},
+	// 	{1, 1, 1, 1,  1, 1, 1, 1,  0, 1, 1, 1,  1, 1, 1, 1, 1},
+	// };
 
-	float upperLeftX = -30;
-	float upperLeftY = 0;
+	// float upperLeftX = -30;
+	// float upperLeftY = 0;
 	float tileWidth = 60;
 	float tileHeight = 60;
 
@@ -235,7 +234,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	//	}
 	//}
 
-	// draw player
+	// define player
 	float playerR = 1.0f;
 	float playerG = 0.0f;
 	float playerB = 0.0f;
@@ -244,21 +243,20 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	float playerLeft = state->playerX - 0.5f * playerWidth;
 	float playerTop = state->playerY - playerHeight;
 
+	// draw player
 	drawRectangle(buffer, playerLeft, playerTop,
 				  playerLeft + playerWidth,
 				  playerTop + playerHeight,
 				  playerR, playerG, playerB);
 
-	// all of row 0
-	//int32_t *dot = (int32_t *)buffer->memory;
-	//for (int i = 0; i < WINDOW_WIDTH; ++i)
-	//	*dot++  = BLUE;
-
+	// draw red line all of row 0
 	int32_t *dot = (int32_t *)buffer->memory;
+	for (int i = 0; i < WINDOW_WIDTH; ++i)
+		*dot++  = RED;
 
+	// draw 5 rows of columns with gaps
 	int rows = 5;
 	int cols = 103;
-
 	for (int j = 0; j < rows; ++j)
 	{
 		int col_width = 5;
@@ -274,11 +272,12 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
 	}
 
-	// blue line
+	// blue line all width
 	for (int i = 0; i < WINDOW_WIDTH; ++i)
 		*dot++ = BLUE;
 	//dot += (WINDOW_WIDTH - 100);
 
+	// draw 5 rows of columns with gaps
 	for (int j = 0; j < rows; ++j)
 	{
 		int col_width = 5;
@@ -294,14 +293,12 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
 	}
 
-
-
-	// blue line
+	// yellow line all width
 	for (int i = 0; i < WINDOW_WIDTH; ++i)
-		*dot++ = BLUE;
+		*dot++ = YELLOW;
 	//dot += (WINDOW_WIDTH - 100);
 
-	// diagonal
+	// draw full diagonal line, single pixel
 	float col = 0.0f;
 	uint8_t *row = (uint8_t *)buffer->memory;
 	for (int y = 0; y < WINDOW_HEIGHT; ++y)
@@ -313,17 +310,41 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		row += buffer->pitch;
 	}
 
-	blob(buffer, 0, 0, RED);
+	// draw individual blobs by col,row
 	blob(buffer, 10, 10, GREEN);
 	blob(buffer, 20, 20, BLUE);
 	blob(buffer, 30, 30, WHITE);
 	blob(buffer, 40, 40, BLACK);
-	blob(buffer, (WINDOW_WIDTH / 2) / COL_WIDTH, (WINDOW_HEIGHT / 2) / ROW_HEIGHT, MAGENTA);
+	blob(buffer, 50, 50, RED);
 
+	// draw centre blob by col,row
+	//blob(buffer, (WINDOW_WIDTH / 2) / COL_WIDTH, (WINDOW_HEIGHT / 2) / ROW_HEIGHT, MAGENTA);
+
+	// draw partial diagonal lines with blobs
 	for (int i = 60; i < 100; ++i)
 		blob(buffer, i, i, YELLOW);
-	for (int i = 100; i < 200; ++i)
+	for (int i = 120; i < 200; ++i)
 		blob(buffer, i, 25, CYAN);
+
+	// draw individual blobs by vector offsets
+	blob(buffer, offsetCol(12), offsetRow(12), GREEN);
+	blob(buffer, offsetCol(22), offsetRow(22), BLUE);
+	blob(buffer, offsetCol(47), offsetRow(-23), BLUE);
+	blob(buffer, offsetCol(32), offsetRow(32), WHITE);
+	blob(buffer, offsetCol(42), offsetRow(42), BLACK);
+	blob(buffer, offsetCol(-20), offsetRow(-20), RED);
+	blob(buffer, offsetCol(-30), offsetRow(-50), CYAN);
+
+	// draw blob outside limits
+	blob(buffer, offsetCol(200), offsetRow(200), BLACK);
+	blob(buffer, offsetCol(-200), offsetRow(-200), BLACK);
+
+	// draw centre blob by offsets
+	blob(buffer, offsetCol(0), offsetRow(0), WHITE);
+
+	// draw partial diagonal lines with offsets
+	for (int i = 50; i < 60; ++i)
+		blob(buffer, offsetCol(i), offsetRow(i), WHITE);
 }
 
 static void blob(struct gameDisplayBuffer *buffer, int col, int row, int32_t colour)
@@ -341,4 +362,24 @@ static void blob(struct gameDisplayBuffer *buffer, int col, int row, int32_t col
 
 		pixel += (WINDOW_WIDTH - COL_WIDTH);
 	}
+}
+
+static int offsetCol(int coord)
+{
+	int result = (MAX_COLS / 2) + coord;
+	if (result >= MAX_COLS)
+		result = MAX_COLS-1;
+	if (result < 0)
+		result = 0;
+	return result;
+}
+
+static int offsetRow(int coord)
+{
+	int result = (MAX_ROWS / 2) + coord;
+	if (result >= MAX_ROWS)
+		result = MAX_ROWS-1;
+	if (result < 0)
+		result = 0;
+	return result;
 }

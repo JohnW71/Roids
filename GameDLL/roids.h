@@ -58,14 +58,15 @@ typedef GAME_GET_SOUND_SAMPLES(game_GetSoundSamples);
 
 // int rockGridSize = ASTEROID_MAX_DIAMETER * ASTEROID_MAX_DIAMETER;
 
-void outs(char *);
 void outputSound(struct gameState *, struct gameSoundOutputBuffer *, int);
 // void fillBuffer(struct gameDisplayBuffer *, int, int);
 // void shipConfig(void);
 // void renderPlayer(struct gameDisplayBuffer *, int, int);
 int32_t roundFloatToInt32(float);
 void drawRectangle(struct gameDisplayBuffer *, float, float, float, float, float, float, float);
-void blob(struct gameDisplayBuffer *buffer, int col, int row, int32_t colour);
+void blob(struct gameDisplayBuffer *, int, int, int32_t);
+int offsetCol(int);
+int offsetRow(int);
 
 struct threadContext
 {
