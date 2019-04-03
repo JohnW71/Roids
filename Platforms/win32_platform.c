@@ -190,15 +190,15 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	LARGE_INTEGER flipWallClock = getWallClock();
 	// int debugTimeMarkerIndex = 0;
 	// struct win32debugTimeMarker debugTimeMarkers[30] = {0};
-	DWORD audioLatencyBytes = 0;
-	float audioLatencySeconds = 0;
+	//DWORD audioLatencyBytes = 0;
+	//float audioLatencySeconds = 0;
 	bool soundIsValid = false;
 	struct win32gameCode game = loadGameCode(srcGameCodeDLLpath, tmpGameCodeDLLpath);
 
 	running = true;
 	paused = false;
 
-	uint64_t lastCycleCount = __rdtsc();
+	//uint64_t lastCycleCount = __rdtsc();
 
 	while (running)
 	{
@@ -398,8 +398,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 				if (unwrappedWriteCursor < playCursor)
 					unwrappedWriteCursor += soundOutput.secondaryBufferSize;
 
-				audioLatencyBytes = unwrappedWriteCursor - playCursor;
-				audioLatencySeconds = (((float)audioLatencyBytes / (float)soundOutput.bytesPerSample) / (float)soundOutput.samplesPerSecond);
+				//audioLatencyBytes = unwrappedWriteCursor - playCursor;
+				//audioLatencySeconds = (((float)audioLatencyBytes / (float)soundOutput.bytesPerSample) / (float)soundOutput.samplesPerSecond);
 
 				fillSoundBuffer(&soundOutput, byteToLock, bytesToWrite, &soundBuffer);
 			}

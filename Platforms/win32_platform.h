@@ -5,7 +5,7 @@
 int stringLength(char *);
 void outs(char *);
 void createBuffer(struct win32displayBuffer *, int, int);
-void displayBuffer(struct win32displayBuffer *, HDC);//, int, int);
+void displayBuffer(struct win32displayBuffer *, HDC);
 void loadXInput(void);
 void initDSound(HWND, int32_t, int32_t);
 void fillSoundBuffer(struct win32soundOutput *, DWORD, DWORD, struct gameSoundOutputBuffer *);

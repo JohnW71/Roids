@@ -5,21 +5,21 @@
 
 static void outputSound(struct gameState *state, struct gameSoundOutputBuffer *soundBuffer, int toneHz)
 {
-	int16_t toneVolume = 3000;
-	int wavePeriod = soundBuffer->samplesPerSecond / toneHz;
+	//int16_t toneVolume = 3000;
+	//int wavePeriod = soundBuffer->samplesPerSecond / toneHz;
 	int16_t *sampleOut = soundBuffer->samples;
 
 	for (int sampleIndex = 0; sampleIndex < soundBuffer->sampleCount; ++sampleIndex)
 	{
-		// float sineValue = sinf(state->tSine);
-		// int16_t sampleValue = (int16_t)(sineValue * toneVolume);
+		//float sineValue = sinf(state->tSine);
+		//int16_t sampleValue = (int16_t)(sineValue * toneVolume);
 		int16_t sampleValue = 0;
 		*sampleOut++ = sampleValue;
 		*sampleOut++ = sampleValue;
 
-		// state->tSine += 2.0f * Pi32 * 1.0f / (float)wavePeriod;
-		// if (state->tSine > 2.0f * Pi32)
-		// 	state->tSine -= 2.0f * Pi32;
+		//state->tSine += 2.0f * Pi32 * 1.0f / (float)wavePeriod;
+		//if (state->tSine > 2.0f * Pi32)
+		//	state->tSine -= 2.0f * Pi32;
 	}
 }
 
@@ -168,27 +168,27 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		else
 		{
 			// digital movement tuning
-			float dPlayerX = 0.0f; // pixels/second
-			float dPlayerY = 0.0f; // pixels/second
+			//float dPlayerX = 0.0f; // pixels/second
+			//float dPlayerY = 0.0f; // pixels/second
 
-			if (controller->moveUp.endedDown)
-				dPlayerY = -1.0f;
-			if (controller->moveDown.endedDown)
-				dPlayerY = 1.0f;
-			if (controller->moveLeft.endedDown)
-				dPlayerX = -1.0f;
-			if (controller->moveRight.endedDown)
-				dPlayerX = 1.0f;
+			//if (controller->moveUp.endedDown)
+			//	dPlayerY = -1.0f;
+			//if (controller->moveDown.endedDown)
+			//	dPlayerY = 1.0f;
+			//if (controller->moveLeft.endedDown)
+			//	dPlayerX = -1.0f;
+			//if (controller->moveRight.endedDown)
+			//	dPlayerX = 1.0f;
 
-			dPlayerX *= 64.0f;
-			dPlayerY *= 64.0f;
+			//dPlayerX *= 64.0f;
+			//dPlayerY *= 64.0f;
 
-			float newPlayerX = state->playerX + input->dtForFrame*dPlayerX;
-			float newPlayerY = state->playerY + input->dtForFrame*dPlayerY;
+			//float newPlayerX = state->playerX + input->dtForFrame*dPlayerX;
+			//float newPlayerY = state->playerY + input->dtForFrame*dPlayerY;
 
-			// should check for valid movement here
-			state->playerX = newPlayerX;
-			state->playerY = newPlayerY;
+			//// should check for valid movement here
+			//state->playerX = newPlayerX;
+			//state->playerY = newPlayerY;
 		}
 	}
 
@@ -244,10 +244,10 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	float playerTop = state->playerY - playerHeight;
 
 	// draw player
-	drawRectangle(buffer, playerLeft, playerTop,
-				  playerLeft + playerWidth,
-				  playerTop + playerHeight,
-				  playerR, playerG, playerB);
+	//drawRectangle(buffer, playerLeft, playerTop,
+	//			  playerLeft + playerWidth,
+	//			  playerTop + playerHeight,
+	//			  playerR, playerG, playerB);
 
 	// draw red line all of row 0
 	int32_t *dot = (int32_t *)buffer->memory;
@@ -264,10 +264,10 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
 		for (int i = 0; i < cols; ++i)
 		{
-			for (int i = 0; i < col_width; ++i)
+			for (int k = 0; k < col_width; ++k)
 				*dot++ = WHITE;
-			for (int i = 0; i < gap; ++i)
-				*dot++;
+			for (int l = 0; l < gap; ++l)
+				dot++;
 		}
 		dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
 	}
@@ -278,20 +278,20 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	//dot += (WINDOW_WIDTH - 100);
 
 	// draw 5 rows of columns with gaps
-	for (int j = 0; j < rows; ++j)
-	{
-		int col_width = 5;
-		int gap = 5;
+	//for (int j = 0; j < rows; ++j)
+	//{
+	//	int col_width = 5;
+	//	int gap = 5;
 
-		for (int i = 0; i < cols; ++i)
-		{
-			for (int i = 0; i < col_width; ++i)
-				*dot++ = WHITE;
-			for (int i = 0; i < gap; ++i)
-				*dot++;
-		}
-		dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
-	}
+	//	for (int i = 0; i < cols; ++i)
+	//	{
+	//		for (int k = 0; k < col_width; ++k)
+	//			*dot++ = WHITE;
+	//		for (int l = 0; l < gap; ++l)
+	//			dot++;
+	//	}
+	//	dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
+	//}
 
 	// yellow line all width
 	for (int i = 0; i < WINDOW_WIDTH; ++i)
@@ -299,52 +299,55 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	//dot += (WINDOW_WIDTH - 100);
 
 	// draw full diagonal line, single pixel
-	float col = 0.0f;
-	uint8_t *row = (uint8_t *)buffer->memory;
-	for (int y = 0; y < WINDOW_HEIGHT; ++y)
-	{
-		col = (y / 600.0f) * WINDOW_WIDTH;
-		uint32_t *pixel = (uint32_t *)row;
-		pixel += ((uint32_t) col);
-		*pixel++ = GREEN;
-		row += buffer->pitch;
-	}
+	//uint8_t *row = (uint8_t *)buffer->memory;
+	//for (int y = 0; y < WINDOW_HEIGHT; ++y)
+	//{
+	//	float col = (y / 600.0f) * WINDOW_WIDTH;
+	//	uint32_t *pixel = (uint32_t *)row;
+	//	pixel += ((uint32_t) col);
+	//	*pixel++ = GREEN;
+	//	row += buffer->pitch;
+	//}
 
 	// draw individual blobs by col,row
-	blob(buffer, 10, 10, GREEN);
-	blob(buffer, 20, 20, BLUE);
-	blob(buffer, 30, 30, WHITE);
-	blob(buffer, 40, 40, BLACK);
-	blob(buffer, 50, 50, RED);
+	//blob(buffer, 10, 10, GREEN);
+	//blob(buffer, 20, 20, BLUE);
+	//blob(buffer, 30, 30, WHITE);
+	//blob(buffer, 40, 40, BLACK);
+	//blob(buffer, 50, 50, RED);
 
 	// draw centre blob by col,row
 	//blob(buffer, (WINDOW_WIDTH / 2) / COL_WIDTH, (WINDOW_HEIGHT / 2) / ROW_HEIGHT, MAGENTA);
 
 	// draw partial diagonal lines with blobs
-	for (int i = 60; i < 100; ++i)
-		blob(buffer, i, i, YELLOW);
-	for (int i = 120; i < 200; ++i)
-		blob(buffer, i, 25, CYAN);
+	//for (int i = 60; i < 100; ++i)
+	//	blob(buffer, i, i, YELLOW);
+	//for (int i = 120; i < 200; ++i)
+	//	blob(buffer, i, i/2, CYAN);
 
 	// draw individual blobs by vector offsets
-	blob(buffer, offsetCol(12), offsetRow(12), GREEN);
-	blob(buffer, offsetCol(22), offsetRow(22), BLUE);
-	blob(buffer, offsetCol(47), offsetRow(-23), BLUE);
-	blob(buffer, offsetCol(32), offsetRow(32), WHITE);
-	blob(buffer, offsetCol(42), offsetRow(42), BLACK);
-	blob(buffer, offsetCol(-20), offsetRow(-20), RED);
-	blob(buffer, offsetCol(-30), offsetRow(-50), CYAN);
+	//blob(buffer, offsetCol(12), offsetRow(12), GREEN);
+	//blob(buffer, offsetCol(22), offsetRow(22), BLUE);
+	//blob(buffer, offsetCol(47), offsetRow(-23), BLUE);
+	//blob(buffer, offsetCol(32), offsetRow(32), WHITE);
+	//blob(buffer, offsetCol(42), offsetRow(42), BLACK);
+	//blob(buffer, offsetCol(-20), offsetRow(-20), RED);
+	//blob(buffer, offsetCol(-30), offsetRow(-50), CYAN);
 
 	// draw blob outside limits
-	blob(buffer, offsetCol(200), offsetRow(200), BLACK);
-	blob(buffer, offsetCol(-200), offsetRow(-200), BLACK);
+	//blob(buffer, offsetCol(200), offsetRow(200), BLACK);
+	//blob(buffer, offsetCol(-200), offsetRow(-200), BLACK);
 
 	// draw centre blob by offsets
-	blob(buffer, offsetCol(0), offsetRow(0), WHITE);
+	//blob(buffer, offsetCol(0), offsetRow(0), WHITE);
 
-	// draw partial diagonal lines with offsets
-	for (int i = 50; i < 60; ++i)
-		blob(buffer, offsetCol(i), offsetRow(i), WHITE);
+	// draw partial diagonal line with offsets
+	//for (int i = 50; i < 60; ++i)
+	//	blob(buffer, offsetCol(i), offsetRow(i), WHITE);
+
+	// draw a line from point to point
+	line(buffer, offsetCol(10), offsetRow(50), offsetCol(50), offsetRow(10), BLACK);
+	line(buffer, offsetCol(12), offsetRow(18), offsetCol(40), offsetRow(35), BLACK);
 }
 
 static void blob(struct gameDisplayBuffer *buffer, int col, int row, int32_t colour)
@@ -361,6 +364,27 @@ static void blob(struct gameDisplayBuffer *buffer, int col, int row, int32_t col
 			*pixel++ = colour;
 
 		pixel += (WINDOW_WIDTH - COL_WIDTH);
+	}
+}
+
+static void line(struct gameDisplayBuffer *buffer, int startCol, int startRow, int endCol, int endRow, int32_t colour)
+{
+	int colGap = endCol - startCol;
+	int rowGap = endRow - startRow;
+	int difference = 2 * rowGap - colGap;
+	int row = startRow;
+
+	for (int col = startCol; col < endCol; ++col)
+	{
+		blob(buffer, col, row, colour);
+
+		if (difference > 0)
+		{
+			++row;
+			difference = difference - (2 * colGap);
+		}
+
+		difference = difference + (2 * rowGap);
 	}
 }
 
