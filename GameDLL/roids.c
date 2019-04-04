@@ -1,7 +1,12 @@
+//#define _CRT_SECURE_NO_WARNINGS
+
 #include <math.h> // sinf
 #include <stdint.h>
 #include <stdbool.h>
 #include "roids.h"
+
+//#include <stdio.h> // sprintf
+//#include <windows.h> // outputdebugstring
 
 static void outputSound(struct gameState *state, struct gameSoundOutputBuffer *soundBuffer, int toneHz)
 {
@@ -250,32 +255,31 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	//			  playerR, playerG, playerB);
 
 	// draw red line all of row 0
-	int32_t *dot = (int32_t *)buffer->memory;
-	for (int i = 0; i < WINDOW_WIDTH; ++i)
-		*dot++  = RED;
+	//int32_t *dot = (int32_t *)buffer->memory;
+	//for (int i = 0; i < WINDOW_WIDTH; ++i)
+	//	*dot++  = RED;
 
 	// draw 5 rows of columns with gaps
-	int rows = 5;
-	int cols = 103;
-	for (int j = 0; j < rows; ++j)
-	{
-		int col_width = 5;
-		int gap = 5;
+	//int rows = 5;
+	//int cols = 103;
+	//for (int j = 0; j < rows; ++j)
+	//{
+	//	int col_width = 5;
+	//	int gap = 5;
 
-		for (int i = 0; i < cols; ++i)
-		{
-			for (int k = 0; k < col_width; ++k)
-				*dot++ = WHITE;
-			for (int l = 0; l < gap; ++l)
-				dot++;
-		}
-		dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
-	}
+	//	for (int i = 0; i < cols; ++i)
+	//	{
+	//		for (int k = 0; k < col_width; ++k)
+	//			*dot++ = WHITE;
+	//		for (int l = 0; l < gap; ++l)
+	//			dot++;
+	//	}
+	//	dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
+	//}
 
 	// blue line all width
-	for (int i = 0; i < WINDOW_WIDTH; ++i)
-		*dot++ = BLUE;
-	//dot += (WINDOW_WIDTH - 100);
+	//for (int i = 0; i < WINDOW_WIDTH; ++i)
+	//	*dot++ = BLUE;
 
 	// draw 5 rows of columns with gaps
 	//for (int j = 0; j < rows; ++j)
@@ -294,9 +298,8 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	//}
 
 	// yellow line all width
-	for (int i = 0; i < WINDOW_WIDTH; ++i)
-		*dot++ = YELLOW;
-	//dot += (WINDOW_WIDTH - 100);
+	//for (int i = 0; i < WINDOW_WIDTH; ++i)
+	//	*dot++ = YELLOW;
 
 	// draw full diagonal line, single pixel
 	//uint8_t *row = (uint8_t *)buffer->memory;
@@ -346,8 +349,14 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	//	blob(buffer, offsetCol(i), offsetRow(i), WHITE);
 
 	// draw a line from point to point
-	line(buffer, offsetCol(10), offsetRow(50), offsetCol(50), offsetRow(10), BLACK);
-	line(buffer, offsetCol(12), offsetRow(18), offsetCol(40), offsetRow(35), BLACK);
+	line(buffer, offsetCol(-50), offsetRow(-50), offsetCol(-40), offsetRow(-40), BLUE);
+	line(buffer, offsetCol(50), offsetRow(50), offsetCol(55), offsetRow(-40), RED);
+	line(buffer, offsetCol(38), offsetRow(22), offsetCol(-23), offsetRow(45), CYAN);
+
+	// draw ship
+	line(buffer, offsetCol(0), offsetRow(0), offsetCol(-4), offsetRow(8), BLUE);
+	line(buffer, offsetCol(0), offsetRow(0), offsetCol(4), offsetRow(8), BLUE);
+	line(buffer, offsetCol(-4), offsetRow(8), offsetCol(4), offsetRow(8), BLUE);
 }
 
 static void blob(struct gameDisplayBuffer *buffer, int col, int row, int32_t colour)
@@ -367,10 +376,19 @@ static void blob(struct gameDisplayBuffer *buffer, int col, int row, int32_t col
 	}
 }
 
-static void line(struct gameDisplayBuffer *buffer, int startCol, int startRow, int endCol, int endRow, int32_t colour)
+static void lineLow(struct gameDisplayBuffer *buffer, int startCol, int startRow, int endCol, int endRow, int32_t colour)
 {
+	++endCol;
 	int colGap = endCol - startCol;
 	int rowGap = endRow - startRow;
+	int step = 1;
+
+	if (rowGap < 0)
+	{
+		step = -1;
+		rowGap = -rowGap;
+	}
+
 	int difference = 2 * rowGap - colGap;
 	int row = startRow;
 
@@ -380,7 +398,7 @@ static void line(struct gameDisplayBuffer *buffer, int startCol, int startRow, i
 
 		if (difference > 0)
 		{
-			++row;
+			row = row + step;
 			difference = difference - (2 * colGap);
 		}
 
@@ -388,8 +406,60 @@ static void line(struct gameDisplayBuffer *buffer, int startCol, int startRow, i
 	}
 }
 
+static void lineHigh(struct gameDisplayBuffer *buffer, int startCol, int startRow, int endCol, int endRow, int32_t colour)
+{
+	++endRow;
+	int colGap = endCol - startCol;
+	int rowGap = endRow - startRow;
+	int step = 1;
+
+	if (colGap < 0)
+	{
+		step = -1;
+		colGap = -colGap;
+	}
+
+	int difference = 2 * colGap - rowGap;
+	int col = startCol;
+
+	for (int row = startRow; row < endRow; ++row)
+	{
+		blob(buffer, col, row, colour);
+
+		if (difference > 0)
+		{
+			col = col + step;
+			difference = difference - (2 * rowGap);
+		}
+
+		difference = difference + (2 * colGap);
+	}
+}
+
+static void line(struct gameDisplayBuffer *buffer, int startCol, int startRow, int endCol, int endRow, int32_t colour)
+{
+	if (abs(endRow - startRow) < abs(endCol - startCol))
+	{
+		if (startCol > endCol)
+			lineLow(buffer, endCol, endRow, startCol, startRow, colour);
+		else
+			lineLow(buffer, startCol, startRow, endCol, endRow, colour);
+	}
+	else
+	{
+		if (startRow > endRow)
+			lineHigh(buffer, endCol, endRow, startCol, startRow, colour);
+		else
+			lineHigh(buffer, startCol, startRow, endCol, endRow, colour);
+	}
+}
+
 static int offsetCol(int coord)
 {
+	//char buf[80];
+	//sprintf(buf, "Col coord = %d\n", coord);
+	//OutputDebugStringA(buf);
+
 	int result = (MAX_COLS / 2) + coord;
 	if (result >= MAX_COLS)
 		result = MAX_COLS-1;
@@ -400,6 +470,10 @@ static int offsetCol(int coord)
 
 static int offsetRow(int coord)
 {
+	//char buf[80];
+	//sprintf(buf, "Row coord = %d\n", coord);
+	//OutputDebugStringA(buf);
+
 	int result = (MAX_ROWS / 2) + coord;
 	if (result >= MAX_ROWS)
 		result = MAX_ROWS-1;

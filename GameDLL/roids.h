@@ -66,6 +66,8 @@ int32_t roundFloatToInt32(float);
 void drawRectangle(struct gameDisplayBuffer *, float, float, float, float, float, float, float);
 void blob(struct gameDisplayBuffer *, int, int, int32_t);
 void line(struct gameDisplayBuffer *, int, int, int, int, int32_t);
+void lineLow(struct gameDisplayBuffer *, int, int, int, int, int32_t);
+void lineHigh(struct gameDisplayBuffer *, int, int, int, int, int32_t);
 int offsetCol(int);
 int offsetRow(int);
 
