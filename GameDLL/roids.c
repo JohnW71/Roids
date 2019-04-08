@@ -330,15 +330,40 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 			//state->playerX = newPlayerX;
 			//state->playerY = newPlayerY;
 
+			if (controller->moveLeft.endedDown)
+			{
+				ship.position.rotation -= 1.0f * input->dtForFrame;
+				rotate(&ship.position, 3);
+			}
+			if (controller->moveRight.endedDown)
+			{
+				ship.position.rotation += 1.0f * input->dtForFrame;
+				rotate(&ship.position, 3);
+			}
+			//TODO handle wrapping off edge of screen
+			if (controller->actionUp.endedDown)
+			{
+				ship.position.coords[0][1] -= 1.0f * input->dtForFrame;
+				ship.position.coords[1][1] -= 1.0f * input->dtForFrame;
+				ship.position.coords[2][1] -= 1.0f * input->dtForFrame;
+			}
+			if (controller->actionDown.endedDown)
+			{
+				ship.position.coords[0][1] += 1.0f * input->dtForFrame;
+				ship.position.coords[1][1] += 1.0f * input->dtForFrame;
+				ship.position.coords[2][1] += 1.0f * input->dtForFrame;
+			}
 			if (controller->actionLeft.endedDown)
 			{
-				ship.position.rotation -= 0.01f;
-				rotate(&ship.position, 3);
+				ship.position.coords[0][0] -= 1.0f * input->dtForFrame;
+				ship.position.coords[1][0] -= 1.0f * input->dtForFrame;
+				ship.position.coords[2][0] -= 1.0f * input->dtForFrame;
 			}
 			if (controller->actionRight.endedDown)
 			{
-				ship.position.rotation += 0.01f;
-				rotate(&ship.position, 3);
+				ship.position.coords[0][0] += 1.0f * input->dtForFrame;
+				ship.position.coords[1][0] += 1.0f * input->dtForFrame;
+				ship.position.coords[2][0] += 1.0f * input->dtForFrame;
 			}
 			if (controller->back.endedDown)
 			{
@@ -494,17 +519,15 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 }
 
 // draw all vertices to form a frame
-//TODO add a scale parameter
-//TODO add a move.x and move.y for new position using translate
+//TODO add a scale parameter?
 static void drawFrame(struct gameDisplayBuffer *buffer, struct Position *position, int verts, uint32_t colour)
 {
 	--verts;
 
-//TODO try roundFloatToInt32() on these
 	for (int i = 0; i < verts; ++i)
-		line(buffer, (int)position->coords[i][0], (int)position->coords[i][1], (int)position->coords[i+1][0], (int)position->coords[i+1][1], colour);
+		line(buffer, roundFloatToInt32(position->coords[i][0]), roundFloatToInt32(position->coords[i][1]), roundFloatToInt32(position->coords[i+1][0]), roundFloatToInt32(position->coords[i+1][1]), colour);
 
-	line(buffer, (int)position->coords[verts][0], (int)position->coords[verts][1], (int)position->coords[0][0], (int)position->coords[0][1], colour);
+	line(buffer, roundFloatToInt32(position->coords[verts][0]), roundFloatToInt32(position->coords[verts][1]), roundFloatToInt32(position->coords[0][0]), roundFloatToInt32(position->coords[0][1]), colour);
 }
 
 static void rotate(struct Position *position, int verts)
@@ -516,6 +539,7 @@ static void rotate(struct Position *position, int verts)
 		r = 359.0f;
 		position->rotation = r;
 	}
+
 	if (r > 359.9f)
 	{
 		r = 0.0f;
