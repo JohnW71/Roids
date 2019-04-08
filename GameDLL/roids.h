@@ -34,20 +34,6 @@
 #define WHITE 0x00FFFFFF
 #define BLACK 0x00000000
 
-// #define ASTEROID_MAX_COUNT 4
-// #define ASTEROID_MAX_DIAMETER 64
-// #define ASTEROID_MIN_DIAMETER 5
-// #define ASTEROID_SIDES 6
-// #define ASTEROID_SPEED_PPS 10
-
-// #define BULLET_SPEED_PPS 10
-// #define BULLET_MAX_COUNT 4
-
-// #define SHIP_ROTATION_SPEED_PPS 10
-// #define SHIP_MAX_SPEED_PPS 10
-// #define SHIP_ACCELERATION_PPS 3
-// #define SHIP_DECELERATION_PPS 2
-
 // manual function definitions
 #define GAME_UPDATE_AND_RENDER(name) void name(struct threadContext *thread, struct gameMemory *memory, struct gameInput *input, struct gameDisplayBuffer *buffer)
 #define GAME_GET_SOUND_SAMPLES(name) void name(struct threadContext *thread, struct gameMemory *memory, struct gameSoundOutputBuffer *soundBuffer)
@@ -56,20 +42,21 @@
 typedef GAME_UPDATE_AND_RENDER(game_UpdateAndRender);
 typedef GAME_GET_SOUND_SAMPLES(game_GetSoundSamples);
 
-// int rockGridSize = ASTEROID_MAX_DIAMETER * ASTEROID_MAX_DIAMETER;
-
 void outputSound(struct gameState *, struct gameSoundOutputBuffer *, int);
 // void fillBuffer(struct gameDisplayBuffer *, int, int);
-// void shipConfig(void);
+void shipReset(void);
 // void renderPlayer(struct gameDisplayBuffer *, int, int);
 int32_t roundFloatToInt32(float);
+int32_t roundFloatToUInt32(float);
 void drawRectangle(struct gameDisplayBuffer *, float, float, float, float, float, float, float);
-void blob(struct gameDisplayBuffer *, int, int, int32_t);
-void line(struct gameDisplayBuffer *, int, int, int, int, int32_t);
-void lineLow(struct gameDisplayBuffer *, int, int, int, int, int32_t);
-void lineHigh(struct gameDisplayBuffer *, int, int, int, int, int32_t);
+void line(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
+void lineLow(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
+void lineHigh(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
+void blob(struct gameDisplayBuffer *, int, int, uint32_t);
 int offsetCol(int);
 int offsetRow(int);
+void drawFrame(struct gameDisplayBuffer *, struct Position *, int, uint32_t);
+void rotate(struct Position *, int);
 
 struct threadContext
 {
@@ -161,13 +148,25 @@ inline struct gameControllerInput *getController(struct gameInput *input, unsign
 	return result;
 }
 
-//struct Ship
-//{
-//	int col;
-//	int row;
-//	int facing;
-//	int trajectory;
-//	int speed;
-//	int acceleration;
-//	int lives;
-//} ship;
+struct Position
+{
+	float rotation;
+	float coords[20][2];
+};
+
+struct Ship
+{
+	short lives;
+	float trajectory;
+	float speed;
+	float thrust;
+	struct Position position;
+} ship;
+
+struct Asteroid
+{
+	short size;
+	float trajectory;
+	float speed;
+	struct Position position;
+} asteroid;

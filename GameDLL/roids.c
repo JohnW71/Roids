@@ -1,12 +1,6 @@
-//#define _CRT_SECURE_NO_WARNINGS
-
-#include <math.h> // sinf
-#include <stdint.h>
-#include <stdbool.h>
 #include "roids.h"
 
-//#include <stdio.h> // sprintf
-//#include <windows.h> // outputdebugstring
+#include <math.h> // sinf
 
 static void outputSound(struct gameState *state, struct gameSoundOutputBuffer *soundBuffer, int toneHz)
 {
@@ -34,7 +28,7 @@ static void outputSound(struct gameState *state, struct gameSoundOutputBuffer *s
 
 // 	for (int y = 0; y < buffer->height; ++y)
 // 	{
-// 		uint32_t *pixel = (uint32_t *)row;
+// 		uint32_t *pixel = (uint32_t *)row; 
 
 // 		for (int x = 0; x < buffer->width; ++x)
 // 		{
@@ -47,16 +41,28 @@ static void outputSound(struct gameState *state, struct gameSoundOutputBuffer *s
 // 	}
 // }
 
-// static void shipConfig(void)
-// {
-// 	ship.col = (GetSystemMetrics(SM_CXSCREEN) - WINDOW_WIDTH) / 2;
-// 	ship.row = (GetSystemMetrics(SM_CYSCREEN) - WINDOW_HEIGHT) / 2;
-// 	ship.facing = 0;
-// 	ship.trajectory = 0;
-// 	ship.speed = 0;
-// 	ship.acceleration = 0;
-// 	ship.lives = 3;
-// }
+static void shipReset(void)
+{
+	// ship.col = (GetSystemMetrics(SM_CXSCREEN) - WINDOW_WIDTH) / 2;
+	// ship.row = (GetSystemMetrics(SM_CYSCREEN) - WINDOW_HEIGHT) / 2;
+	ship.lives = 3;
+	ship.trajectory = 0.0f;
+	ship.speed = 0.0f;
+	ship.thrust = 0.0f;
+	ship.position.rotation = 0.0f;
+	//ship.position.coords[0][0] = 20.0f;
+	//ship.position.coords[0][1] = 20.0f;
+	//ship.position.coords[1][0] = 16.0f;
+	//ship.position.coords[1][1] = 28.0f;
+	//ship.position.coords[2][0] = 24.0f;
+	//ship.position.coords[2][1] = 28.0f;
+	ship.position.coords[0][0] = 0.0f;
+	ship.position.coords[0][1] = 0.0f;
+	ship.position.coords[1][0] = -4.0f;
+	ship.position.coords[1][1] = 8.0f;
+	ship.position.coords[2][0] = 4.0f;
+	ship.position.coords[2][1] = 8.0f;
+}
 
 // static void renderPlayer(struct gameDisplayBuffer *buffer, int playerX, int playerY)
 // {
@@ -140,6 +146,132 @@ GAME_GET_SOUND_SAMPLES(gameGetSoundSamples)
 	outputSound(state, soundBuffer, 400);
 }
 
+// draw coloured line from start point to end point
+static void line(struct gameDisplayBuffer *buffer, int startCol, int startRow, int endCol, int endRow, uint32_t colour)
+{
+	startCol = offsetCol(startCol);
+	startRow = offsetRow(startRow);
+	endCol = offsetCol(endCol);
+	endRow = offsetRow(endRow);
+
+	if (abs(endRow - startRow) < abs(endCol - startCol))
+	{
+		if (startCol > endCol)
+			lineLow(buffer, endCol, endRow, startCol, startRow, colour);
+		else
+			lineLow(buffer, startCol, startRow, endCol, endRow, colour);
+	}
+	else
+	{
+		if (startRow > endRow)
+			lineHigh(buffer, endCol, endRow, startCol, startRow, colour);
+		else
+			lineHigh(buffer, startCol, startRow, endCol, endRow, colour);
+	}
+}
+
+// draw coloured line from start point to end point
+static void lineHigh(struct gameDisplayBuffer *buffer, int startCol, int startRow, int endCol, int endRow, uint32_t colour)
+{
+	++endRow;
+	int colGap = endCol - startCol;
+	int rowGap = endRow - startRow;
+	int step = 1;
+
+	if (colGap < 0)
+	{
+		step = -1;
+		colGap = -colGap;
+	}
+
+	int difference = 2 * colGap - rowGap;
+	int col = startCol;
+
+	for (int row = startRow; row < endRow; ++row)
+	{
+		blob(buffer, col, row, colour);
+
+		if (difference > 0)
+		{
+			col = col + step;
+			difference = difference - (2 * rowGap);
+		}
+
+		difference = difference + (2 * colGap);
+	}
+}
+
+// draw coloured line from start point to end point
+static void lineLow(struct gameDisplayBuffer *buffer, int startCol, int startRow, int endCol, int endRow, uint32_t colour)
+{
+	++endCol;
+	int colGap = endCol - startCol;
+	int rowGap = endRow - startRow;
+	int step = 1;
+
+	if (rowGap < 0)
+	{
+		step = -1;
+		rowGap = -rowGap;
+	}
+
+	int difference = 2 * rowGap - colGap;
+	int row = startRow;
+
+	for (int col = startCol; col < endCol; ++col)
+	{
+		blob(buffer, col, row, colour);
+
+		if (difference > 0)
+		{
+			row = row + step;
+			difference = difference - (2 * colGap);
+		}
+
+		difference = difference + (2 * rowGap);
+	}
+}
+
+// convert col number into 2d space value
+static int offsetCol(int coord)
+{
+	int result = (MAX_COLS / 2) + coord;
+	if (result >= MAX_COLS)
+		result = MAX_COLS-1;
+	if (result < 0)
+		result = 0;
+	return result;
+}
+
+// convert row number into 2d space value
+static int offsetRow(int coord)
+{
+	int result = (MAX_ROWS / 2) + coord;
+	if (result >= MAX_ROWS)
+		result = MAX_ROWS-1;
+	if (result < 0)
+		result = 0;
+	return result;
+}
+
+// draw coloured square at specified position
+static void blob(struct gameDisplayBuffer *buffer, int col, int row, uint32_t colour)
+{
+	if (col >= MAX_COLS || row >= MAX_ROWS)
+		return;
+
+	uint32_t *pixel = (uint32_t *)buffer->memory;
+	pixel += (row * WINDOW_WIDTH * ROW_HEIGHT) + (col * COL_WIDTH);
+
+	for (int y = 0; y < ROW_HEIGHT; ++y)
+	{
+		for (int x = 0; x < COL_WIDTH; ++x)
+			*pixel++ = colour;
+
+		pixel += (WINDOW_WIDTH - COL_WIDTH);
+	}
+}
+
 //extern "C" GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 //void gameUpdateAndRender(struct threadContext *thread, struct gameMemory *memory, struct gameInput *input, struct gameDisplayBuffer *buffer)
 //#pragma comment(linker, "/export:gameUpdateAndRender")
@@ -154,11 +286,12 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	struct gameState *state = (struct gameState *)memory->permanentStorage;
 	if (!memory->isInitialized)
 	{
-		// state->toneHz = 512; //1000
-		// state->tSine = 0.0f;
-		state->playerX = 150;
-		state->playerY = 150;
+		//state->toneHz = 512; //1000
+		//state->tSine = 0.0f;
+		//state->playerX = 150;
+		//state->playerY = 150;
 		memory->isInitialized = true;
+		shipReset();
 	}
 
 	for (int controllerIndex = 0; controllerIndex < arrayCount(input->controllers); ++controllerIndex)
@@ -167,8 +300,10 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		if (controller->isAnalog)
 		{
 			// analog movement tuning
-			// state->blueOffset += (int)(4.0f * controller->stickAverageX);
-			// state->toneHz = 512 + (int)(128.0f * controller->stickAverageY);
+			//state->blueOffset += (int)(4.0f * controller->stickAverageX);
+			//state->toneHz = 512 + (int)(128.0f * controller->stickAverageY);
+
+			//ship.position.rotation += (int)(4.0f * controller->stickAverageX);
 		}
 		else
 		{
@@ -194,6 +329,21 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 			//// should check for valid movement here
 			//state->playerX = newPlayerX;
 			//state->playerY = newPlayerY;
+
+			if (controller->actionLeft.endedDown)
+			{
+				ship.position.rotation -= 0.01f;
+				rotate(&ship.position, 3);
+			}
+			if (controller->actionRight.endedDown)
+			{
+				ship.position.rotation += 0.01f;
+				rotate(&ship.position, 3);
+			}
+			if (controller->back.endedDown)
+			{
+				shipReset();
+			}
 		}
 	}
 
@@ -215,8 +365,8 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
 	// float upperLeftX = -30;
 	// float upperLeftY = 0;
-	float tileWidth = 60;
-	float tileHeight = 60;
+	// float tileWidth = 60;
+	// float tileHeight = 60;
 
 	// set background
 	drawRectangle(buffer, 0.0f, 0.0f, (float)buffer->width, (float)buffer->height, 0.7f, 0.7f, 0.7f);
@@ -240,13 +390,13 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	//}
 
 	// define player
-	float playerR = 1.0f;
-	float playerG = 0.0f;
-	float playerB = 0.0f;
-	float playerWidth = 0.75f * tileWidth;
-	float playerHeight = tileHeight;
-	float playerLeft = state->playerX - 0.5f * playerWidth;
-	float playerTop = state->playerY - playerHeight;
+	// float playerR = 1.0f;
+	// float playerG = 0.0f;
+	// float playerB = 0.0f;
+	// float playerWidth = 0.75f * tileWidth;
+	// float playerHeight = tileHeight;
+	// float playerLeft = state->playerX - 0.5f * playerWidth;
+	// float playerTop = state->playerY - playerHeight;
 
 	// draw player
 	//drawRectangle(buffer, playerLeft, playerTop,
@@ -255,7 +405,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	//			  playerR, playerG, playerB);
 
 	// draw red line all of row 0
-	//int32_t *dot = (int32_t *)buffer->memory;
+	//uint32_t *dot = (uint32_t *)buffer->memory;
 	//for (int i = 0; i < WINDOW_WIDTH; ++i)
 	//	*dot++  = RED;
 
@@ -312,22 +462,6 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	//	row += buffer->pitch;
 	//}
 
-	// draw individual blobs by col,row
-	//blob(buffer, 10, 10, GREEN);
-	//blob(buffer, 20, 20, BLUE);
-	//blob(buffer, 30, 30, WHITE);
-	//blob(buffer, 40, 40, BLACK);
-	//blob(buffer, 50, 50, RED);
-
-	// draw centre blob by col,row
-	//blob(buffer, (WINDOW_WIDTH / 2) / COL_WIDTH, (WINDOW_HEIGHT / 2) / ROW_HEIGHT, MAGENTA);
-
-	// draw partial diagonal lines with blobs
-	//for (int i = 60; i < 100; ++i)
-	//	blob(buffer, i, i, YELLOW);
-	//for (int i = 120; i < 200; ++i)
-	//	blob(buffer, i, i/2, CYAN);
-
 	// draw individual blobs by vector offsets
 	//blob(buffer, offsetCol(12), offsetRow(12), GREEN);
 	//blob(buffer, offsetCol(22), offsetRow(22), BLUE);
@@ -337,147 +471,62 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	//blob(buffer, offsetCol(-20), offsetRow(-20), RED);
 	//blob(buffer, offsetCol(-30), offsetRow(-50), CYAN);
 
-	// draw blob outside limits
+	// draw blob outside limits, should be in corners
 	//blob(buffer, offsetCol(200), offsetRow(200), BLACK);
 	//blob(buffer, offsetCol(-200), offsetRow(-200), BLACK);
 
-	// draw centre blob by offsets
+	// draw centre blob
 	//blob(buffer, offsetCol(0), offsetRow(0), WHITE);
 
-	// draw partial diagonal line with offsets
-	//for (int i = 50; i < 60; ++i)
-	//	blob(buffer, offsetCol(i), offsetRow(i), WHITE);
-
 	// draw a line from point to point
-	line(buffer, offsetCol(-50), offsetRow(-50), offsetCol(-40), offsetRow(-40), BLUE);
-	line(buffer, offsetCol(50), offsetRow(50), offsetCol(55), offsetRow(-40), RED);
-	line(buffer, offsetCol(38), offsetRow(22), offsetCol(-23), offsetRow(45), CYAN);
+	//line(buffer, -50, -50, -40, -40, BLUE);
+	//line(buffer, 50, 50, 55, -40, RED);
+	//line(buffer, 38, 22, -23, 45, CYAN);
 
-	// draw ship
-	line(buffer, offsetCol(0), offsetRow(0), offsetCol(-4), offsetRow(8), BLUE);
-	line(buffer, offsetCol(0), offsetRow(0), offsetCol(4), offsetRow(8), BLUE);
-	line(buffer, offsetCol(-4), offsetRow(8), offsetCol(4), offsetRow(8), BLUE);
+	if (ship.lives == 0)
+		shipReset();
+
+	// draw ship model
+	drawFrame(buffer, &ship.position, 3, BLUE);
+
+	//TODO not configured yet
+	//drawFrame(buffer, &asteroid.position, 20, WHITE);
 }
 
-static void blob(struct gameDisplayBuffer *buffer, int col, int row, int32_t colour)
+// draw all vertices to form a frame
+//TODO add a scale parameter
+//TODO add a move.x and move.y for new position using translate
+static void drawFrame(struct gameDisplayBuffer *buffer, struct Position *position, int verts, uint32_t colour)
 {
-	if (col >= MAX_COLS || row >= MAX_ROWS)
-		return;
+	--verts;
 
-	int32_t *pixel = (int32_t *)buffer->memory;
-	pixel += (row * WINDOW_WIDTH * ROW_HEIGHT) + (col * COL_WIDTH);
+//TODO try roundFloatToInt32() on these
+	for (int i = 0; i < verts; ++i)
+		line(buffer, (int)position->coords[i][0], (int)position->coords[i][1], (int)position->coords[i+1][0], (int)position->coords[i+1][1], colour);
 
-	for (int y = 0; y < ROW_HEIGHT; ++y)
-	{
-		for (int x = 0; x < COL_WIDTH; ++x)
-			*pixel++ = colour;
-
-		pixel += (WINDOW_WIDTH - COL_WIDTH);
-	}
+	line(buffer, (int)position->coords[verts][0], (int)position->coords[verts][1], (int)position->coords[0][0], (int)position->coords[0][1], colour);
 }
 
-static void lineLow(struct gameDisplayBuffer *buffer, int startCol, int startRow, int endCol, int endRow, int32_t colour)
+static void rotate(struct Position *position, int verts)
 {
-	++endCol;
-	int colGap = endCol - startCol;
-	int rowGap = endRow - startRow;
-	int step = 1;
+	float r = position->rotation;
 
-	if (rowGap < 0)
+	if (r < 0.0f)
 	{
-		step = -1;
-		rowGap = -rowGap;
+		r = 359.0f;
+		position->rotation = r;
+	}
+	if (r > 359.9f)
+	{
+		r = 0.0f;
+		position->rotation = r;
 	}
 
-	int difference = 2 * rowGap - colGap;
-	int row = startRow;
-
-	for (int col = startCol; col < endCol; ++col)
+	for (int i = 0; i < verts; ++i)
 	{
-		blob(buffer, col, row, colour);
-
-		if (difference > 0)
-		{
-			row = row + step;
-			difference = difference - (2 * colGap);
-		}
-
-		difference = difference + (2 * rowGap);
+		float x = position->coords[i][0];
+		float y = position->coords[i][1];
+		position->coords[i][0] = x * cosf(r) - y * sinf(r);
+		position->coords[i][1] = x * sinf(r) + y * cosf(r);
 	}
-}
-
-static void lineHigh(struct gameDisplayBuffer *buffer, int startCol, int startRow, int endCol, int endRow, int32_t colour)
-{
-	++endRow;
-	int colGap = endCol - startCol;
-	int rowGap = endRow - startRow;
-	int step = 1;
-
-	if (colGap < 0)
-	{
-		step = -1;
-		colGap = -colGap;
-	}
-
-	int difference = 2 * colGap - rowGap;
-	int col = startCol;
-
-	for (int row = startRow; row < endRow; ++row)
-	{
-		blob(buffer, col, row, colour);
-
-		if (difference > 0)
-		{
-			col = col + step;
-			difference = difference - (2 * rowGap);
-		}
-
-		difference = difference + (2 * colGap);
-	}
-}
-
-static void line(struct gameDisplayBuffer *buffer, int startCol, int startRow, int endCol, int endRow, int32_t colour)
-{
-	if (abs(endRow - startRow) < abs(endCol - startCol))
-	{
-		if (startCol > endCol)
-			lineLow(buffer, endCol, endRow, startCol, startRow, colour);
-		else
-			lineLow(buffer, startCol, startRow, endCol, endRow, colour);
-	}
-	else
-	{
-		if (startRow > endRow)
-			lineHigh(buffer, endCol, endRow, startCol, startRow, colour);
-		else
-			lineHigh(buffer, startCol, startRow, endCol, endRow, colour);
-	}
-}
-
-static int offsetCol(int coord)
-{
-	//char buf[80];
-	//sprintf(buf, "Col coord = %d\n", coord);
-	//OutputDebugStringA(buf);
-
-	int result = (MAX_COLS / 2) + coord;
-	if (result >= MAX_COLS)
-		result = MAX_COLS-1;
-	if (result < 0)
-		result = 0;
-	return result;
-}
-
-static int offsetRow(int coord)
-{
-	//char buf[80];
-	//sprintf(buf, "Row coord = %d\n", coord);
-	//OutputDebugStringA(buf);
-
-	int result = (MAX_ROWS / 2) + coord;
-	if (result >= MAX_ROWS)
-		result = MAX_ROWS-1;
-	if (result < 0)
-		result = 0;
-	return result;
 }

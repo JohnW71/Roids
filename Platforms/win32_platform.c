@@ -215,7 +215,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		// zero controller info
 		struct gameControllerInput *oldKeyboardController = getController(oldInput, 0);
 		struct gameControllerInput *newKeyboardController = getController(newInput, 0);
-		//newKeyboardController = {0};
+		*newKeyboardController = (struct gameControllerInput){0};
 		newKeyboardController->isConnected = true;
 		for (int buttonIndex = 0; buttonIndex < arrayCount(newKeyboardController->buttons); ++buttonIndex)
 			newKeyboardController->buttons[buttonIndex].endedDown = oldKeyboardController->buttons[buttonIndex].endedDown;
@@ -908,10 +908,7 @@ static void processPendingMessages(struct win32state *state, struct gameControll
 					if (VKCode == 'W')
 						processKeyboardMessage(&keyboardController->moveUp, isDown);
 					else if (VKCode == 'S')
-					{
-						outs("S");
 						processKeyboardMessage(&keyboardController->moveDown, isDown);
-					}
 					else if (VKCode == 'A')
 						processKeyboardMessage(&keyboardController->moveLeft, isDown);
 					else if (VKCode == 'D')
