@@ -14,6 +14,7 @@
 #define ROW_HEIGHT 4
 #define MAX_COLS (WINDOW_WIDTH / COL_WIDTH)
 #define MAX_ROWS (WINDOW_HEIGHT / ROW_HEIGHT)
+#define MAX_VERTS 20
 
 #define Pi32 3.14159265359f
 #define assert(expression) if(!(expression)) {*(int *)0 = 0;}
@@ -42,21 +43,18 @@
 typedef GAME_UPDATE_AND_RENDER(game_UpdateAndRender);
 typedef GAME_GET_SOUND_SAMPLES(game_GetSoundSamples);
 
-void outputSound(struct gameState *, struct gameSoundOutputBuffer *, int);
-// void fillBuffer(struct gameDisplayBuffer *, int, int);
-void shipReset(void);
-// void renderPlayer(struct gameDisplayBuffer *, int, int);
 int32_t roundFloatToInt32(float);
 int32_t roundFloatToUInt32(float);
+int offsetCol(int);
+int offsetRow(int);
+void outputSound(struct gameState *, struct gameSoundOutputBuffer *, int);
+void shipReset(void);
 void drawRectangle(struct gameDisplayBuffer *, float, float, float, float, float, float, float);
 void line(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
 void lineLow(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
 void lineHigh(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
 void blob(struct gameDisplayBuffer *, int, int, uint32_t);
-int offsetCol(int);
-int offsetRow(int);
-void drawFrame(struct gameDisplayBuffer *, struct Position *, int, uint32_t);
-void rotate(struct Position *, int);
+void drawFrame(struct gameDisplayBuffer *, struct Position *, short, float, uint32_t);
 
 struct threadContext
 {
@@ -104,8 +102,8 @@ struct gameControllerInput
 {
 	bool isConnected;
 	bool isAnalog;
-	float stickAverageX;
-	float stickAverageY;
+	//float stickAverageX;
+	//float stickAverageY;
 
 	union
 	{
@@ -150,13 +148,14 @@ inline struct gameControllerInput *getController(struct gameInput *input, unsign
 
 struct Position
 {
-	float rotation;
-	float coords[20][2];
+	float angle;
+	float coords[MAX_VERTS][2];
 };
 
 struct Ship
 {
 	short lives;
+	short verts;
 	float trajectory;
 	float speed;
 	float thrust;
@@ -166,6 +165,7 @@ struct Ship
 struct Asteroid
 {
 	short size;
+	short verts;
 	float trajectory;
 	float speed;
 	struct Position position;

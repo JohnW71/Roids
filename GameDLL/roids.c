@@ -22,40 +22,14 @@ static void outputSound(struct gameState *state, struct gameSoundOutputBuffer *s
 	}
 }
 
-// static void fillBuffer(struct gameDisplayBuffer *buffer, int blueOffset, int greenOffset)
-// {
-// 	uint8_t *row = (uint8_t *)buffer->memory;
-
-// 	for (int y = 0; y < buffer->height; ++y)
-// 	{
-// 		uint32_t *pixel = (uint32_t *)row; 
-
-// 		for (int x = 0; x < buffer->width; ++x)
-// 		{
-// 			uint8_t blue = (uint8_t)(x + blueOffset);
-// 			uint8_t green = (uint8_t)(y + greenOffset);
-// 			*pixel++ = ((green << 16) | blue);
-// 		}
-
-// 		row += buffer->pitch;
-// 	}
-// }
-
 static void shipReset(void)
 {
-	// ship.col = (GetSystemMetrics(SM_CXSCREEN) - WINDOW_WIDTH) / 2;
-	// ship.row = (GetSystemMetrics(SM_CYSCREEN) - WINDOW_HEIGHT) / 2;
 	ship.lives = 3;
+	ship.verts = 3;
 	ship.trajectory = 0.0f;
 	ship.speed = 0.0f;
 	ship.thrust = 0.0f;
-	ship.position.rotation = 0.0f;
-	//ship.position.coords[0][0] = 20.0f;
-	//ship.position.coords[0][1] = 20.0f;
-	//ship.position.coords[1][0] = 16.0f;
-	//ship.position.coords[1][1] = 28.0f;
-	//ship.position.coords[2][0] = 24.0f;
-	//ship.position.coords[2][1] = 28.0f;
+	ship.position.angle = 0.0f;
 	ship.position.coords[0][0] = 0.0f;
 	ship.position.coords[0][1] = 0.0f;
 	ship.position.coords[1][0] = -4.0f;
@@ -63,27 +37,6 @@ static void shipReset(void)
 	ship.position.coords[2][0] = 4.0f;
 	ship.position.coords[2][1] = 8.0f;
 }
-
-// static void renderPlayer(struct gameDisplayBuffer *buffer, int playerX, int playerY)
-// {
-// 	uint8_t *endOfBuffer = (uint8_t *)buffer->memory + (uint8_t)buffer->pitch * (uint8_t)buffer->height;
-// 	uint32_t colour = 0xFFFFFFFF;
-// 	int top = playerY;
-// 	int bottom = playerY + 10;
-
-// 	for (int x = playerX; x < playerX + 10; ++x)
-// 	{
-// 		uint8_t *pixel = ((uint8_t *)buffer->memory + x * buffer->bytesPerPixel + top * buffer->pitch);
-
-// 		for (int y = top; y < bottom; ++y)
-// 		{
-// 			if ((pixel >= (uint8_t *)buffer->memory) && ((pixel + (uint8_t)4) <= endOfBuffer))
-// 				*(uint32_t *)pixel = colour;
-// 		}
-
-// 		pixel += buffer->pitch;
-// 	}
-// }
 
 inline int32_t roundFloatToInt32(float f)
 {
@@ -103,6 +56,7 @@ inline int32_t roundFloatToUInt32(float f)
 // 	return result;
 // }
 
+//TODO not worth having this? only used to fill background now?
 static void drawRectangle(struct gameDisplayBuffer *buffer,
 						  float fMinX, float fMinY,
 						  float fMaxX, float fMaxY,
@@ -137,8 +91,6 @@ static void drawRectangle(struct gameDisplayBuffer *buffer,
 	}
 }
 
-//extern "C" GAME_GET_SOUND_SAMPLES(gameGetSoundSamples)
-//void gameGetSoundSamples(struct threadContext *thread, struct gameMemory *memory, struct gameSoundOutputBuffer *soundBuffer)
 //#pragma comment(linker, "/export:gameGetSoundSamples")
 GAME_GET_SOUND_SAMPLES(gameGetSoundSamples)
 {
@@ -272,8 +224,67 @@ static void blob(struct gameDisplayBuffer *buffer, int col, int row, uint32_t co
 	}
 }
 
-//extern "C" GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
-//void gameUpdateAndRender(struct threadContext *thread, struct gameMemory *memory, struct gameInput *input, struct gameDisplayBuffer *buffer)
+static void drawDebugLines(struct gameDisplayBuffer *buffer)
+{
+	// draw red line all of row 0
+	uint32_t *dot = (uint32_t *)buffer->memory;
+	for (int i = 0; i < WINDOW_WIDTH; ++i)
+		*dot++ = RED;
+
+	// draw 5 rows of columns with gaps
+	int rows = 5;
+	int cols = 103;
+	for (int j = 0; j < rows; ++j)
+	{
+		int col_width = 5;
+		int gap = 5;
+
+		for (int i = 0; i < cols; ++i)
+		{
+			for (int k = 0; k < col_width; ++k)
+				*dot++ = WHITE;
+			for (int l = 0; l < gap; ++l)
+				dot++;
+		}
+		dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
+	}
+
+	// blue line all width
+	for (int i = 0; i < WINDOW_WIDTH; ++i)
+		*dot++ = BLUE;
+
+	// draw 5 rows of columns with gaps
+	for (int j = 0; j < rows; ++j)
+	{
+		int col_width = 5;
+		int gap = 5;
+
+		for (int i = 0; i < cols; ++i)
+		{
+			for (int k = 0; k < col_width; ++k)
+				*dot++ = WHITE;
+			for (int l = 0; l < gap; ++l)
+				dot++;
+		}
+		dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
+	}
+
+	// yellow line all width
+	for (int i = 0; i < WINDOW_WIDTH; ++i)
+		*dot++ = YELLOW;
+
+	// draw full diagonal line, single pixel
+	uint8_t *row = (uint8_t *)buffer->memory;
+	for (int y = 0; y < WINDOW_HEIGHT; ++y)
+	{
+		float col = (y / 600.0f) * WINDOW_WIDTH;
+		uint32_t *pixel = (uint32_t *)row;
+		pixel += ((uint32_t)col);
+		*pixel++ = GREEN;
+		row += buffer->pitch;
+	}
+}
+
 //#pragma comment(linker, "/export:gameUpdateAndRender")
 GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 {
@@ -288,8 +299,6 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	{
 		//state->toneHz = 512; //1000
 		//state->tSine = 0.0f;
-		//state->playerX = 150;
-		//state->playerY = 150;
 		memory->isInitialized = true;
 		shipReset();
 	}
@@ -299,7 +308,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		struct gameControllerInput *controller = getController(input, controllerIndex);
 		if (controller->isAnalog)
 		{
-			// analog movement tuning
+			// analog movement
 			//state->blueOffset += (int)(4.0f * controller->stickAverageX);
 			//state->toneHz = 512 + (int)(128.0f * controller->stickAverageY);
 
@@ -307,63 +316,41 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		}
 		else
 		{
-			// digital movement tuning
-			//float dPlayerX = 0.0f; // pixels/second
-			//float dPlayerY = 0.0f; // pixels/second
+			// digital movement
 
-			//if (controller->moveUp.endedDown)
-			//	dPlayerY = -1.0f;
-			//if (controller->moveDown.endedDown)
-			//	dPlayerY = 1.0f;
-			//if (controller->moveLeft.endedDown)
-			//	dPlayerX = -1.0f;
-			//if (controller->moveRight.endedDown)
-			//	dPlayerX = 1.0f;
-
-			//dPlayerX *= 64.0f;
-			//dPlayerY *= 64.0f;
-
-			//float newPlayerX = state->playerX + input->dtForFrame*dPlayerX;
-			//float newPlayerY = state->playerY + input->dtForFrame*dPlayerY;
-
-			//// should check for valid movement here
-			//state->playerX = newPlayerX;
-			//state->playerY = newPlayerY;
-
+			// update ship direction
+			float turnSpeed = 2.0f;
 			if (controller->moveLeft.endedDown)
-			{
-				ship.position.rotation -= 1.0f * input->dtForFrame;
-				rotate(&ship.position, 3);
-			}
+				ship.position.angle -= turnSpeed * input->dtForFrame;
 			if (controller->moveRight.endedDown)
-			{
-				ship.position.rotation += 1.0f * input->dtForFrame;
-				rotate(&ship.position, 3);
-			}
+				ship.position.angle += turnSpeed * input->dtForFrame;
+
 			//TODO handle wrapping off edge of screen
+			//TODO movement should only be thrust in facing direction
+			float moveSpeed = 20.0f;
 			if (controller->actionUp.endedDown)
 			{
-				ship.position.coords[0][1] -= 1.0f * input->dtForFrame;
-				ship.position.coords[1][1] -= 1.0f * input->dtForFrame;
-				ship.position.coords[2][1] -= 1.0f * input->dtForFrame;
+				ship.position.coords[0][1] -= moveSpeed * input->dtForFrame;
+				ship.position.coords[1][1] -= moveSpeed * input->dtForFrame;
+				ship.position.coords[2][1] -= moveSpeed * input->dtForFrame;
 			}
 			if (controller->actionDown.endedDown)
 			{
-				ship.position.coords[0][1] += 1.0f * input->dtForFrame;
-				ship.position.coords[1][1] += 1.0f * input->dtForFrame;
-				ship.position.coords[2][1] += 1.0f * input->dtForFrame;
+				ship.position.coords[0][1] += moveSpeed * input->dtForFrame;
+				ship.position.coords[1][1] += moveSpeed * input->dtForFrame;
+				ship.position.coords[2][1] += moveSpeed * input->dtForFrame;
 			}
 			if (controller->actionLeft.endedDown)
 			{
-				ship.position.coords[0][0] -= 1.0f * input->dtForFrame;
-				ship.position.coords[1][0] -= 1.0f * input->dtForFrame;
-				ship.position.coords[2][0] -= 1.0f * input->dtForFrame;
+				ship.position.coords[0][0] -= moveSpeed * input->dtForFrame;
+				ship.position.coords[1][0] -= moveSpeed * input->dtForFrame;
+				ship.position.coords[2][0] -= moveSpeed * input->dtForFrame;
 			}
 			if (controller->actionRight.endedDown)
 			{
-				ship.position.coords[0][0] += 1.0f * input->dtForFrame;
-				ship.position.coords[1][0] += 1.0f * input->dtForFrame;
-				ship.position.coords[2][0] += 1.0f * input->dtForFrame;
+				ship.position.coords[0][0] += moveSpeed * input->dtForFrame;
+				ship.position.coords[1][0] += moveSpeed * input->dtForFrame;
+				ship.position.coords[2][0] += moveSpeed * input->dtForFrame;
 			}
 			if (controller->back.endedDown)
 			{
@@ -372,185 +359,59 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		}
 	}
 
-	//drawRectangle(buffer, 0.0f, 0.0f, (float)buffer->width, (float)buffer->height, 0x00FF00FF);
-	//drawRectangle(buffer, 10.0f, 10.0f, 40.0f, 40.0f, 0x0000FFFF);
-
-	// uint32_t tileMap[9][17] =
-	// {
-	// 	{1, 1, 1, 1,  1, 1, 1, 1,  0, 1, 1, 1,  1, 1, 1, 1, 1},
-	// 	{1, 1, 0, 0,  0, 1, 0, 0,  0, 0, 0, 0,  0, 1, 0, 0, 1},
-	// 	{1, 1, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0,  0, 1, 1, 0, 1},
-	// 	{1, 0, 0, 0,  0, 0, 0, 0,  1, 1, 0, 0,  0, 0, 0, 0, 1},
-	// 	{0, 0, 0, 0,  0, 1, 0, 0,  1, 1, 0, 0,  0, 0, 0, 0, 0},
-	// 	{1, 1, 0, 0,  0, 1, 0, 0,  1, 0, 0, 0,  0, 1, 1, 0, 1},
-	// 	{1, 0, 0, 0,  0, 1, 0, 0,  1, 0, 0, 0,  1, 1, 0, 0, 1},
-	// 	{1, 1, 1, 1,  1, 1, 0, 0,  0, 0, 0, 0,  0, 1, 0, 0, 1},
-	// 	{1, 1, 1, 1,  1, 1, 1, 1,  0, 1, 1, 1,  1, 1, 1, 1, 1},
-	// };
-
-	// float upperLeftX = -30;
-	// float upperLeftY = 0;
-	// float tileWidth = 60;
-	// float tileHeight = 60;
-
 	// set background
+	//TODO replace this with manual fill instead?
 	drawRectangle(buffer, 0.0f, 0.0f, (float)buffer->width, (float)buffer->height, 0.7f, 0.7f, 0.7f);
 
-	// draw tilemap
-	//for (int row = 0; row < 9; ++row)
-	//{
-	//	for (int col = 0; col < 17; ++col)
-	//	{
-	//		uint32_t tileID = tileMap[row][col];
-	//		float grey = 0.5f;
-	//		if (tileID == 1)
-	//			grey = 1.0f;
-
-	//		float minX = upperLeftX + ((float)col) * tileWidth;
-	//		float minY = upperLeftY + ((float)row) * tileHeight;
-	//		float maxX = minX + tileWidth;
-	//		float maxY = minY + tileHeight;
-	//		drawRectangle(buffer, minX, minY, maxX, maxY, grey, grey, grey);
-	//	}
-	//}
-
-	// define player
-	// float playerR = 1.0f;
-	// float playerG = 0.0f;
-	// float playerB = 0.0f;
-	// float playerWidth = 0.75f * tileWidth;
-	// float playerHeight = tileHeight;
-	// float playerLeft = state->playerX - 0.5f * playerWidth;
-	// float playerTop = state->playerY - playerHeight;
-
-	// draw player
-	//drawRectangle(buffer, playerLeft, playerTop,
-	//			  playerLeft + playerWidth,
-	//			  playerTop + playerHeight,
-	//			  playerR, playerG, playerB);
-
-	// draw red line all of row 0
-	//uint32_t *dot = (uint32_t *)buffer->memory;
-	//for (int i = 0; i < WINDOW_WIDTH; ++i)
-	//	*dot++  = RED;
-
-	// draw 5 rows of columns with gaps
-	//int rows = 5;
-	//int cols = 103;
-	//for (int j = 0; j < rows; ++j)
-	//{
-	//	int col_width = 5;
-	//	int gap = 5;
-
-	//	for (int i = 0; i < cols; ++i)
-	//	{
-	//		for (int k = 0; k < col_width; ++k)
-	//			*dot++ = WHITE;
-	//		for (int l = 0; l < gap; ++l)
-	//			dot++;
-	//	}
-	//	dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
-	//}
-
-	// blue line all width
-	//for (int i = 0; i < WINDOW_WIDTH; ++i)
-	//	*dot++ = BLUE;
-
-	// draw 5 rows of columns with gaps
-	//for (int j = 0; j < rows; ++j)
-	//{
-	//	int col_width = 5;
-	//	int gap = 5;
-
-	//	for (int i = 0; i < cols; ++i)
-	//	{
-	//		for (int k = 0; k < col_width; ++k)
-	//			*dot++ = WHITE;
-	//		for (int l = 0; l < gap; ++l)
-	//			dot++;
-	//	}
-	//	dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
-	//}
-
-	// yellow line all width
-	//for (int i = 0; i < WINDOW_WIDTH; ++i)
-	//	*dot++ = YELLOW;
-
-	// draw full diagonal line, single pixel
-	//uint8_t *row = (uint8_t *)buffer->memory;
-	//for (int y = 0; y < WINDOW_HEIGHT; ++y)
-	//{
-	//	float col = (y / 600.0f) * WINDOW_WIDTH;
-	//	uint32_t *pixel = (uint32_t *)row;
-	//	pixel += ((uint32_t) col);
-	//	*pixel++ = GREEN;
-	//	row += buffer->pitch;
-	//}
-
-	// draw individual blobs by vector offsets
-	//blob(buffer, offsetCol(12), offsetRow(12), GREEN);
-	//blob(buffer, offsetCol(22), offsetRow(22), BLUE);
-	//blob(buffer, offsetCol(47), offsetRow(-23), BLUE);
-	//blob(buffer, offsetCol(32), offsetRow(32), WHITE);
-	//blob(buffer, offsetCol(42), offsetRow(42), BLACK);
-	//blob(buffer, offsetCol(-20), offsetRow(-20), RED);
-	//blob(buffer, offsetCol(-30), offsetRow(-50), CYAN);
-
-	// draw blob outside limits, should be in corners
-	//blob(buffer, offsetCol(200), offsetRow(200), BLACK);
-	//blob(buffer, offsetCol(-200), offsetRow(-200), BLACK);
-
-	// draw centre blob
-	//blob(buffer, offsetCol(0), offsetRow(0), WHITE);
-
-	// draw a line from point to point
-	//line(buffer, -50, -50, -40, -40, BLUE);
-	//line(buffer, 50, 50, 55, -40, RED);
-	//line(buffer, 38, 22, -23, 45, CYAN);
+	//drawDebugLines(buffer);
 
 	if (ship.lives == 0)
 		shipReset();
 
 	// draw ship model
-	drawFrame(buffer, &ship.position, 3, BLUE);
+	drawFrame(buffer, &ship.position, ship.verts, 1.0, BLUE);
 
 	//TODO not configured yet
-	//drawFrame(buffer, &asteroid.position, 20, WHITE);
+	//drawFrame(buffer, &asteroid.position, asteroid.verts, 3.0, WHITE);
 }
 
 // draw all vertices to form a frame
 //TODO add a scale parameter?
-static void drawFrame(struct gameDisplayBuffer *buffer, struct Position *position, int verts, uint32_t colour)
+//TODO there is a bug drawing the lines at centre position
+static void drawFrame(struct gameDisplayBuffer *buffer, struct Position *position, short verts, float scale, uint32_t colour)
 {
-	--verts;
+	assert(verts <= MAX_VERTS);
 
-	for (int i = 0; i < verts; ++i)
-		line(buffer, roundFloatToInt32(position->coords[i][0]), roundFloatToInt32(position->coords[i][1]), roundFloatToInt32(position->coords[i+1][0]), roundFloatToInt32(position->coords[i+1][1]), colour);
+	float new_coords[MAX_VERTS][2];
 
-	line(buffer, roundFloatToInt32(position->coords[verts][0]), roundFloatToInt32(position->coords[verts][1]), roundFloatToInt32(position->coords[0][0]), roundFloatToInt32(position->coords[0][1]), colour);
-}
-
-static void rotate(struct Position *position, int verts)
-{
-	float r = position->rotation;
-
-	if (r < 0.0f)
-	{
-		r = 359.0f;
-		position->rotation = r;
-	}
-
-	if (r > 359.9f)
-	{
-		r = 0.0f;
-		position->rotation = r;
-	}
-
+	// update rotation
+	float r = position->angle;
 	for (int i = 0; i < verts; ++i)
 	{
 		float x = position->coords[i][0];
 		float y = position->coords[i][1];
-		position->coords[i][0] = x * cosf(r) - y * sinf(r);
-		position->coords[i][1] = x * sinf(r) + y * cosf(r);
+		new_coords[i][0] = x * cosf(r) - y * sinf(r);
+		new_coords[i][1] = x * sinf(r) + y * cosf(r);
 	}
+
+	// update scale
+	for (int i = 0; i < verts; ++i)
+	{
+		new_coords[i][0] *= scale;
+		new_coords[i][1] *= scale;
+	}
+
+	// draw all vertex lines
+	--verts;
+	for (int i = 0; i < verts; ++i)
+		line(buffer, 
+			roundFloatToInt32(new_coords[i][0]), roundFloatToInt32(new_coords[i][1]),
+			roundFloatToInt32(new_coords[i+1][0]), roundFloatToInt32(new_coords[i+1][1]),
+			colour);
+
+	// draw last vertex line
+	line(buffer, 
+		roundFloatToInt32(new_coords[verts][0]), roundFloatToInt32(new_coords[verts][1]),
+		roundFloatToInt32(new_coords[0][0]), roundFloatToInt32(new_coords[0][1]),
+		BLACK);
 }

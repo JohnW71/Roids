@@ -259,38 +259,38 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 					XINPUT_GAMEPAD *pad = &controllerState.Gamepad;
 
 					// square deadzone
-					newController->stickAverageX = processXinputStickValue(pad->sThumbLX, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
-					newController->stickAverageY = processXinputStickValue(pad->sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+					//newController->stickAverageX = processXinputStickValue(pad->sThumbLX, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+					//newController->stickAverageY = processXinputStickValue(pad->sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
 
-					if ((newController->stickAverageX != 0.0f) || (newController->stickAverageY != 0.0f))
-						newController->isAnalog = true;
+					//if ((newController->stickAverageX != 0.0f) || (newController->stickAverageY != 0.0f))
+					//	newController->isAnalog = true;
 
-					if (pad->wButtons & XINPUT_GAMEPAD_DPAD_UP)
-					{
-						newController->stickAverageY = 1.0f;
-						newController->isAnalog = false;
-					}
-					if (pad->wButtons & XINPUT_GAMEPAD_DPAD_DOWN)
-					{
-						newController->stickAverageY = -1.0f;
-						newController->isAnalog = false;
-					}
-					if (pad->wButtons & XINPUT_GAMEPAD_DPAD_LEFT)
-					{
-						newController->stickAverageX = -1.0f;
-						newController->isAnalog = false;
-					}
-					if (pad->wButtons & XINPUT_GAMEPAD_DPAD_RIGHT)
-					{
-						newController->stickAverageX = 1.0f;
-						newController->isAnalog = false;
-					}
+					//if (pad->wButtons & XINPUT_GAMEPAD_DPAD_UP)
+					//{
+					//	newController->stickAverageY = 1.0f;
+					//	newController->isAnalog = false;
+					//}
+					//if (pad->wButtons & XINPUT_GAMEPAD_DPAD_DOWN)
+					//{
+					//	newController->stickAverageY = -1.0f;
+					//	newController->isAnalog = false;
+					//}
+					//if (pad->wButtons & XINPUT_GAMEPAD_DPAD_LEFT)
+					//{
+					//	newController->stickAverageX = -1.0f;
+					//	newController->isAnalog = false;
+					//}
+					//if (pad->wButtons & XINPUT_GAMEPAD_DPAD_RIGHT)
+					//{
+					//	newController->stickAverageX = 1.0f;
+					//	newController->isAnalog = false;
+					//}
 
-					float threshold = 0.5f;
-					processXinputDigitalButton((newController->stickAverageY < threshold) ? 1 : 0, &oldController->moveUp, 1, &newController->moveUp);
-					processXinputDigitalButton((newController->stickAverageY < -threshold) ? 1 : 0, &oldController->moveDown, 1, &newController->moveDown);
-					processXinputDigitalButton((newController->stickAverageX < -threshold) ? 1 : 0, &oldController->moveLeft, 1, &newController->moveLeft);
-					processXinputDigitalButton((newController->stickAverageX < threshold) ? 1 : 0, &oldController->moveRight, 1, &newController->moveRight);
+					//float threshold = 0.5f;
+					//processXinputDigitalButton((newController->stickAverageY < threshold) ? 1 : 0, &oldController->moveUp, 1, &newController->moveUp);
+					//processXinputDigitalButton((newController->stickAverageY < -threshold) ? 1 : 0, &oldController->moveDown, 1, &newController->moveDown);
+					//processXinputDigitalButton((newController->stickAverageX < -threshold) ? 1 : 0, &oldController->moveLeft, 1, &newController->moveLeft);
+					//processXinputDigitalButton((newController->stickAverageX < threshold) ? 1 : 0, &oldController->moveRight, 1, &newController->moveRight);
 
 					processXinputDigitalButton(pad->wButtons, &oldController->actionUp, XINPUT_GAMEPAD_Y, &newController->actionUp);
 					processXinputDigitalButton(pad->wButtons, &oldController->actionDown, XINPUT_GAMEPAD_A, &newController->actionDown);
