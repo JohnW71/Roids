@@ -1,6 +1,19 @@
 #include "roids.h"
 
-#include <math.h> // sinf
+#include <math.h>
+
+static int32_t roundFloatToInt32(float f)
+{
+	int32_t result = (int32_t)(f + 0.5f);
+	return result;
+}
+
+//TODO this can be removed once background is cleared manually
+static int32_t roundFloatToUInt32(float f)
+{
+	uint32_t result = (uint32_t)(f + 0.5f);
+	return result;
+}
 
 static void outputSound(struct gameState *state, struct gameSoundOutputBuffer *soundBuffer, int toneHz)
 {
@@ -22,80 +35,27 @@ static void outputSound(struct gameState *state, struct gameSoundOutputBuffer *s
 	}
 }
 
-static void shipReset(void)
-{
-	ship.lives = 3;
-	ship.verts = 3;
-	ship.trajectory = 0.0f;
-	ship.speed = 0.0f;
-	ship.thrust = 0.0f;
-	ship.position.angle = 0.0f;
-	ship.position.coords[0][0] = 0.0f;
-	ship.position.coords[0][1] = 0.0f;
-	ship.position.coords[1][0] = -4.0f;
-	ship.position.coords[1][1] = 8.0f;
-	ship.position.coords[2][0] = 4.0f;
-	ship.position.coords[2][1] = 8.0f;
-}
-
-inline int32_t roundFloatToInt32(float f)
-{
-	int32_t result = (int32_t)(f + 0.5f);
-	return result;
-}
-
-inline int32_t roundFloatToUInt32(float f)
-{
-	uint32_t result = (uint32_t)(f + 0.5f);
-	return result;
-}
-
-// inline int32_t truncateFloatToInt32(float f)
-// {
-// 	int32_t result = (int32_t)f;
-// 	return result;
-// }
-
-//TODO not worth having this? only used to fill background now?
-static void drawRectangle(struct gameDisplayBuffer *buffer,
-						  float fMinX, float fMinY,
-						  float fMaxX, float fMaxY,
-						  float R, float G, float B)
-{
-	int32_t minX = roundFloatToInt32(fMinX);
-	int32_t minY = roundFloatToInt32(fMinY);
-	int32_t maxX = roundFloatToInt32(fMaxX);
-	int32_t maxY = roundFloatToInt32(fMaxY);
-
-	if (minX < 0)
-		minX = 0;
-	if (minY < 0)
-		minY = 0;
-	if (maxX > buffer->width)
-		maxX = buffer->width;
-	if (maxY > buffer->height)
-		maxY = buffer->height;
-
-	uint32_t colour = ((roundFloatToUInt32(R * 255.0f) << 16) |
-					   (roundFloatToUInt32(G * 255.0f) << 8) |
-					   (roundFloatToUInt32(B * 255.0f) << 0));
-
-	uint8_t *row = ((uint8_t *)buffer->memory + minX * buffer->bytesPerPixel + minY * buffer->pitch);
-	for (int y = minY; y < maxY; ++y)
-	{
-		uint32_t *pixel = (uint32_t *)row;
-		for (int x = minX; x < maxX; ++x)
-			*pixel++ = colour;
-
-		row += buffer->pitch;
-	}
-}
-
 //#pragma comment(linker, "/export:gameGetSoundSamples")
 GAME_GET_SOUND_SAMPLES(gameGetSoundSamples)
 {
 	struct gameState *state = (struct gameState *)memory->permanentStorage;
 	outputSound(state, soundBuffer, 400);
+}
+
+static void shipReset(void)
+{
+	ship.verts = 3;
+	ship.position.angle = 0.0f;
+	ship.position.x = 0;
+	ship.position.y = 0;
+	ship.position.dx = 0;
+	ship.position.dy = 0;
+	ship.position.coords[0].x = 0.0f;
+	ship.position.coords[0].y = 0.0f;
+	ship.position.coords[1].x = -4.0f;
+	ship.position.coords[1].y = 8.0f;
+	ship.position.coords[2].x = 4.0f;
+	ship.position.coords[2].y = 8.0f;
 }
 
 // draw coloured line from start point to end point
@@ -184,33 +144,57 @@ static void lineLow(struct gameDisplayBuffer *buffer, int startCol, int startRow
 	}
 }
 
-// convert col number into 2d space value
+// convert coord into 2d column with 0,0 top left
 static int offsetCol(int coord)
 {
 	int result = (MAX_COLS / 2) + coord;
 	if (result >= MAX_COLS)
-		result = MAX_COLS-1;
+		result = MAX_COLS - 1;
 	if (result < 0)
 		result = 0;
 	return result;
 }
 
-// convert row number into 2d space value
+// convert coord into 2d row with 0,0 top left
 static int offsetRow(int coord)
 {
 	int result = (MAX_ROWS / 2) + coord;
 	if (result >= MAX_ROWS)
-		result = MAX_ROWS-1;
+		result = MAX_ROWS - 1;
 	if (result < 0)
 		result = 0;
 	return result;
 }
 
+// toroidal wrapping
+//static void wrapCoordinates(float xIn, float yIn, float *xOut, float *yOut)
+//{
+//	//xOut = xIn;
+//	//yOut = yIn;
+//
+//	if (xIn < 0.0f)
+//		*xOut = xIn + (float)WINDOW_WIDTH;
+//
+//	if (xIn >= 0.0f)
+//		*xOut = xIn - (float)WINDOW_WIDTH;
+//
+//	if (yIn < 0.0f)
+//		*yOut = yIn + (float)WINDOW_HEIGHT;
+//
+//	if (yIn >= (float)WINDOW_HEIGHT)
+//		*yOut = yIn - (float)WINDOW_HEIGHT;
+//}
+
 // draw coloured square at specified position
 static void blob(struct gameDisplayBuffer *buffer, int col, int row, uint32_t colour)
 {
+	assert(col < MAX_COLS);
+	assert(row < MAX_ROWS);
+
 	if (col >= MAX_COLS || row >= MAX_ROWS)
 		return;
+
+	//wrapCoordinates(col, row, &col, &row);
 
 	uint32_t *pixel = (uint32_t *)buffer->memory;
 	pixel += (row * WINDOW_WIDTH * ROW_HEIGHT) + (col * COL_WIDTH);
@@ -285,6 +269,108 @@ static void drawDebugLines(struct gameDisplayBuffer *buffer)
 	}
 }
 
+static void drawInfo(struct gameDisplayBuffer *buffer, struct gameState *state, uint32_t colour)
+{
+	if (state->score > 9)
+		state->score = 0;
+
+	switch (state->score)
+	{
+		case 0:
+			blob(buffer, 1, 0, colour); blob(buffer, 2, 0, colour); blob(buffer, 3, 0, colour);
+			blob(buffer, 1, 1, colour);								blob(buffer, 3, 1, colour);
+			blob(buffer, 1, 2, colour);								blob(buffer, 3, 2, colour);
+			blob(buffer, 1, 3, colour);								blob(buffer, 3, 3, colour);
+			blob(buffer, 1, 4, colour); blob(buffer, 2, 4, colour); blob(buffer, 3, 4, colour);
+			break;
+		case 1:
+			blob(buffer, 2, 0, colour);
+			blob(buffer, 2, 1, colour);
+			blob(buffer, 2, 2, colour);
+			blob(buffer, 2, 3, colour);
+			blob(buffer, 2, 4, colour);
+			break;
+		case 2:
+			blob(buffer, 1, 0, colour); blob(buffer, 2, 0, colour); blob(buffer, 3, 0, colour);
+																	blob(buffer, 3, 1, colour);
+			blob(buffer, 1, 2, colour); blob(buffer, 2, 2, colour); blob(buffer, 3, 2, colour);
+			blob(buffer, 1, 3, colour);
+			blob(buffer, 1, 4, colour); blob(buffer, 2, 4, colour); blob(buffer, 3, 4, colour);
+			break;
+		case 3:
+			blob(buffer, 1, 0, colour); blob(buffer, 2, 0, colour); blob(buffer, 3, 0, colour);
+																	blob(buffer, 3, 1, colour);
+										blob(buffer, 2, 2, colour); blob(buffer, 3, 2, colour);
+																	blob(buffer, 3, 3, colour);
+			blob(buffer, 1, 4, colour); blob(buffer, 2, 4, colour); blob(buffer, 3, 4, colour);
+			break;
+		case 4:
+			blob(buffer, 1, 0, colour);								blob(buffer, 3, 0, colour);
+			blob(buffer, 1, 1, colour);								blob(buffer, 3, 1, colour);
+			blob(buffer, 1, 2, colour); blob(buffer, 2, 2, colour); blob(buffer, 3, 2, colour);
+																	blob(buffer, 3, 3, colour);
+																	blob(buffer, 3, 4, colour);
+			break;
+		case 5:
+			blob(buffer, 1, 0, colour); blob(buffer, 2, 0, colour); blob(buffer, 3, 0, colour);
+			blob(buffer, 1, 1, colour);
+			blob(buffer, 1, 2, colour); blob(buffer, 2, 2, colour); blob(buffer, 3, 2, colour);
+																	blob(buffer, 3, 3, colour);
+			blob(buffer, 1, 4, colour); blob(buffer, 2, 4, colour); blob(buffer, 3, 4, colour);
+			break;
+		case 6:
+			blob(buffer, 1, 0, colour);
+			blob(buffer, 1, 1, colour);
+			blob(buffer, 1, 2, colour); blob(buffer, 2, 2, colour); blob(buffer, 3, 2, colour);
+			blob(buffer, 1, 3, colour);								blob(buffer, 3, 3, colour);
+			blob(buffer, 1, 4, colour); blob(buffer, 2, 4, colour); blob(buffer, 3, 4, colour);
+			break;
+		case 7:
+			blob(buffer, 1, 0, colour); blob(buffer, 2, 0, colour); blob(buffer, 3, 0, colour);
+																	blob(buffer, 3, 1, colour);
+																	blob(buffer, 3, 2, colour);
+																	blob(buffer, 3, 3, colour);
+																	blob(buffer, 3, 4, colour);
+			break;
+		case 8:
+			blob(buffer, 1, 0, colour); blob(buffer, 2, 0, colour); blob(buffer, 3, 0, colour);
+			blob(buffer, 1, 1, colour);								blob(buffer, 3, 1, colour);
+			blob(buffer, 1, 2, colour); blob(buffer, 2, 2, colour); blob(buffer, 3, 2, colour);
+			blob(buffer, 1, 3, colour);								blob(buffer, 3, 3, colour);
+			blob(buffer, 1, 4, colour); blob(buffer, 2, 4, colour); blob(buffer, 3, 4, colour);
+			break;
+		case 9:
+			blob(buffer, 1, 0, colour); blob(buffer, 2, 0, colour); blob(buffer, 3, 0, colour);
+			blob(buffer, 1, 1, colour);								blob(buffer, 3, 1, colour);
+			blob(buffer, 1, 2, colour); blob(buffer, 2, 2, colour); blob(buffer, 3, 2, colour);
+																	blob(buffer, 3, 3, colour);
+																	blob(buffer, 3, 4, colour);
+			break;
+	}
+
+	blob(buffer, MAX_COLS - 8, MAX_ROWS - 2, RED);
+	blob(buffer, MAX_COLS - 8, MAX_ROWS - 3, RED);
+	blob(buffer, MAX_COLS - 9, MAX_ROWS - 2, RED);
+	blob(buffer, MAX_COLS - 9, MAX_ROWS - 3, RED);
+
+	if (state->lives > 1)
+	{
+		blob(buffer, MAX_COLS - 5, MAX_ROWS - 2, ORANGE);
+		blob(buffer, MAX_COLS - 5, MAX_ROWS - 3, ORANGE);
+		blob(buffer, MAX_COLS - 6, MAX_ROWS - 2, ORANGE);
+		blob(buffer, MAX_COLS - 6, MAX_ROWS - 3, ORANGE);
+	}
+
+	if (state->lives > 2)
+	{
+		blob(buffer, MAX_COLS - 2, MAX_ROWS - 2, GREEN);
+		blob(buffer, MAX_COLS - 2, MAX_ROWS - 3, GREEN);
+		blob(buffer, MAX_COLS - 3, MAX_ROWS - 2, GREEN);
+		blob(buffer, MAX_COLS - 3, MAX_ROWS - 3, GREEN);
+	}
+
+}
+
 //#pragma comment(linker, "/export:gameUpdateAndRender")
 GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 {
@@ -299,6 +385,8 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	{
 		//state->toneHz = 512; //1000
 		//state->tSine = 0.0f;
+		state->score = 0;
+		state->lives = 3;
 		memory->isInitialized = true;
 		shipReset();
 	}
@@ -309,48 +397,57 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		if (controller->isAnalog)
 		{
 			// analog movement
-			//state->blueOffset += (int)(4.0f * controller->stickAverageX);
-			//state->toneHz = 512 + (int)(128.0f * controller->stickAverageY);
-
 			//ship.position.rotation += (int)(4.0f * controller->stickAverageX);
 		}
 		else
 		{
 			// digital movement
+			float turnSpeed = 2.0f;
+			float moveSpeed = 20.0f;
 
 			// update ship direction
-			float turnSpeed = 2.0f;
 			if (controller->moveLeft.endedDown)
 				ship.position.angle -= turnSpeed * input->dtForFrame;
 			if (controller->moveRight.endedDown)
 				ship.position.angle += turnSpeed * input->dtForFrame;
 
-			//TODO handle wrapping off edge of screen
-			//TODO movement should only be thrust in facing direction
-			float moveSpeed = 20.0f;
+			//TODO test toroidal mapping first
+			//TODO get thrust working then remove these
 			if (controller->actionUp.endedDown)
 			{
-				ship.position.coords[0][1] -= moveSpeed * input->dtForFrame;
-				ship.position.coords[1][1] -= moveSpeed * input->dtForFrame;
-				ship.position.coords[2][1] -= moveSpeed * input->dtForFrame;
+				//ship.position.coords[0].y -= moveSpeed * input->dtForFrame;
+				//ship.position.coords[1].y -= moveSpeed * input->dtForFrame;
+				//ship.position.coords[2].y -= moveSpeed * input->dtForFrame;
+				if (state->lives < 3)
+					++state->lives;
+
+				// acceleration changes velocity over time
+				ship.position.dx += sinf(ship.position.angle) * moveSpeed * input->dtForFrame;
+				ship.position.dy += -cosf(ship.position.angle) * moveSpeed * input->dtForFrame;
 			}
 			if (controller->actionDown.endedDown)
 			{
-				ship.position.coords[0][1] += moveSpeed * input->dtForFrame;
-				ship.position.coords[1][1] += moveSpeed * input->dtForFrame;
-				ship.position.coords[2][1] += moveSpeed * input->dtForFrame;
+				//ship.position.coords[0].y += moveSpeed * input->dtForFrame;
+				//ship.position.coords[1].y += moveSpeed * input->dtForFrame;
+				//ship.position.coords[2].y += moveSpeed * input->dtForFrame;
+				if (state->lives > 0)
+					--state->lives;
 			}
 			if (controller->actionLeft.endedDown)
 			{
-				ship.position.coords[0][0] -= moveSpeed * input->dtForFrame;
-				ship.position.coords[1][0] -= moveSpeed * input->dtForFrame;
-				ship.position.coords[2][0] -= moveSpeed * input->dtForFrame;
+				//ship.position.coords[0].x -= moveSpeed * input->dtForFrame;
+				//ship.position.coords[1].x -= moveSpeed * input->dtForFrame;
+				//ship.position.coords[2].x -= moveSpeed * input->dtForFrame;
+				if (state->score < 9)
+					++state->score;
 			}
 			if (controller->actionRight.endedDown)
 			{
-				ship.position.coords[0][0] += moveSpeed * input->dtForFrame;
-				ship.position.coords[1][0] += moveSpeed * input->dtForFrame;
-				ship.position.coords[2][0] += moveSpeed * input->dtForFrame;
+				//ship.position.coords[0].x += moveSpeed * input->dtForFrame;
+				//ship.position.coords[1].x += moveSpeed * input->dtForFrame;
+				//ship.position.coords[2].x += moveSpeed * input->dtForFrame;
+				if (state->score > 0)
+					--state->score;
 			}
 			if (controller->back.endedDown)
 			{
@@ -359,37 +456,67 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		}
 	}
 
-	// set background
-	//TODO replace this with manual fill instead?
-	drawRectangle(buffer, 0.0f, 0.0f, (float)buffer->width, (float)buffer->height, 0.7f, 0.7f, 0.7f);
+	// clear background
+	uint32_t *dot = (uint32_t *)buffer->memory;
+	for (int i = 0; i < WINDOW_HEIGHT; ++i)
+		for (int j = 0; j < WINDOW_WIDTH; ++j)
+			*dot++ = BLACK;
 
 	//drawDebugLines(buffer);
 
-	if (ship.lives == 0)
-		shipReset();
+	//if (state->lives == 0)
+	//{
+	//	state->score = 0;
+	//	shipReset();
+	//}
 
-	// draw ship model
-	drawFrame(buffer, &ship.position, ship.verts, 1.0, BLUE);
+	// velocity changes position over time
+	ship.position.x += ship.position.dx * input->dtForFrame;
+	ship.position.y += ship.position.dy * input->dtForFrame;
 
-	//TODO not configured yet
+	// draw models
+	drawFrame(buffer, &ship.position, ship.verts, 1.0f, WHITE);
 	//drawFrame(buffer, &asteroid.position, asteroid.verts, 3.0, WHITE);
+
+	// draw data info
+	drawInfo(buffer, state, CYAN);
+
+	// slow down gradually, temporary!
+	float slowdown = 1.0f;
+	if (ship.position.dx > 0)
+		ship.position.dx -= slowdown * input->dtForFrame;
+	if (ship.position.dy > 0)
+		ship.position.dy -= slowdown * input->dtForFrame;
+	   
+	//TODO check diagonal lines through the centre
+	//TODO fix bug in centre of lines
+	//for (int x = 100, y = 20; x < 150; ++x, ++y)
+	//	blob(buffer, x, y, CYAN);
+
+	//for (int x = 10, y = 80; x < 80; ++x, --y)
+	//	blob(buffer, x, y, GREEN);
+
+	//line(buffer, 20, 20, -20, -20, WHITE);
+	//line(buffer, 20, 20, 40, 40, BLUE);
+	//line(buffer, -10, -10, -40, -40, GREEN);
 }
 
 // draw all vertices to form a frame
-//TODO add a scale parameter?
 //TODO there is a bug drawing the lines at centre position
 static void drawFrame(struct gameDisplayBuffer *buffer, struct Position *position, short verts, float scale, uint32_t colour)
 {
 	assert(verts <= MAX_VERTS);
 
 	float new_coords[MAX_VERTS][2];
+	//float x = position->x;
+	//float y = position->y;
 
 	// update rotation
 	float r = position->angle;
 	for (int i = 0; i < verts; ++i)
 	{
-		float x = position->coords[i][0];
-		float y = position->coords[i][1];
+		float x = position->coords[i].x;
+		float y = position->coords[i].y;
 		new_coords[i][0] = x * cosf(r) - y * sinf(r);
 		new_coords[i][1] = x * sinf(r) + y * cosf(r);
 	}
@@ -401,17 +528,33 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct Position *positio
 		new_coords[i][1] *= scale;
 	}
 
-	// draw all vertex lines
+	// translate co-ordinates
+	for (int i = 0; i < verts; ++i)
+	{
+		new_coords[i][0] += position->x;
+		new_coords[i][1] += position->y;
+	}
+
+	// draw vertex lines
 	--verts;
 	for (int i = 0; i < verts; ++i)
-		line(buffer, 
+	{
+		//int j = i + 1;
+		line(buffer,
 			roundFloatToInt32(new_coords[i][0]), roundFloatToInt32(new_coords[i][1]),
-			roundFloatToInt32(new_coords[i+1][0]), roundFloatToInt32(new_coords[i+1][1]),
+			roundFloatToInt32(new_coords[i + 1][0]), roundFloatToInt32(new_coords[i + 1][1]),
 			colour);
+		//line(buffer,
+		//	 roundFloatToInt32(new_coords[i % verts][0]),
+		//	 roundFloatToInt32(new_coords[i % verts][1]),
+		//	 roundFloatToInt32(new_coords[j % verts][0]),
+		//	 roundFloatToInt32(new_coords[j % verts][1]),
+		//	 colour);
+	}
 
 	// draw last vertex line
-	line(buffer, 
-		roundFloatToInt32(new_coords[verts][0]), roundFloatToInt32(new_coords[verts][1]),
-		roundFloatToInt32(new_coords[0][0]), roundFloatToInt32(new_coords[0][1]),
-		BLACK);
+	 line(buffer,
+	 	 roundFloatToInt32(new_coords[verts][0]), roundFloatToInt32(new_coords[verts][1]),
+	 	 roundFloatToInt32(new_coords[0][0]), roundFloatToInt32(new_coords[0][1]),
+	 	 BLUE);
 }

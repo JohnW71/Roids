@@ -34,6 +34,7 @@
 #define YELLOW 0x00FFFF00
 #define WHITE 0x00FFFFFF
 #define BLACK 0x00000000
+#define ORANGE 0x00FFA500
 
 // manual function definitions
 #define GAME_UPDATE_AND_RENDER(name) void name(struct threadContext *thread, struct gameMemory *memory, struct gameInput *input, struct gameDisplayBuffer *buffer)
@@ -49,12 +50,13 @@ int offsetCol(int);
 int offsetRow(int);
 void outputSound(struct gameState *, struct gameSoundOutputBuffer *, int);
 void shipReset(void);
-void drawRectangle(struct gameDisplayBuffer *, float, float, float, float, float, float, float);
 void line(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
 void lineLow(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
 void lineHigh(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
 void blob(struct gameDisplayBuffer *, int, int, uint32_t);
 void drawFrame(struct gameDisplayBuffer *, struct Position *, short, float, uint32_t);
+//void wrapCoordinates(float, float, float *, float *);
+void drawInfo(struct gameDisplayBuffer *, struct gameState *, uint32_t);
 
 struct threadContext
 {
@@ -79,8 +81,8 @@ struct gameSoundOutputBuffer
 
 struct gameState
 {
-	float playerX;
-	float playerY;
+	short lives;
+	short score;
 };
 
 struct gameMemory
@@ -139,26 +141,34 @@ struct gameInput
 	struct gameControllerInput controllers[5];
 };
 
-inline struct gameControllerInput *getController(struct gameInput *input, unsigned int controllerIndex)
+struct gameControllerInput *getController(struct gameInput *input, unsigned int controllerIndex)
 {
 	assert(controllerIndex < arrayCount(input->controllers));
 	struct gameControllerInput *result = &input->controllers[controllerIndex];
 	return result;
 }
 
+struct Coords
+{
+	float x;
+	float y;
+};
+
 struct Position
 {
+	float dx;
+	float dy;
+	float x;
+	float y;
 	float angle;
-	float coords[MAX_VERTS][2];
+	// float coords[MAX_VERTS][2];
+//TODO convert to use this instead
+	struct Coords coords[MAX_VERTS];
 };
 
 struct Ship
 {
-	short lives;
 	short verts;
-	float trajectory;
-	float speed;
-	float thrust;
 	struct Position position;
 } ship;
 
@@ -166,7 +176,5 @@ struct Asteroid
 {
 	short size;
 	short verts;
-	float trajectory;
-	float speed;
 	struct Position position;
 } asteroid;

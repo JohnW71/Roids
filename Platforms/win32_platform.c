@@ -165,8 +165,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	LPVOID baseAddress = 0;
 #endif
 	struct gameMemory memory = {0};
-	memory.permanentStorageSize = megabytes(64);
-	memory.transientStorageSize = gigabytes(1);
+	memory.permanentStorageSize = megabytes(16);
+	memory.transientStorageSize = megabytes(16); //gigabytes(1);
 	state.totalSize = memory.permanentStorageSize + memory.transientStorageSize;
 	state.gameMemoryBlock = VirtualAlloc(baseAddress, (size_t)state.totalSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 
@@ -577,7 +577,7 @@ static void buildDLLPathFilename(struct win32state *state, char *filename, int d
 // store current exe filename & size
 static void getExeFilename(struct win32state *state)
 {
-	//DWORD sizeOfFilename = //TODO will this be used?
+	//DWORD sizeOfFilename = // will this be needed?
 	GetModuleFileNameA(0, state->exeFilename, sizeof(state->exeFilename));
 	state->onePastLastSlash = state->exeFilename;
 
@@ -587,7 +587,7 @@ static void getExeFilename(struct win32state *state)
 			state->onePastLastSlash = scan + 1;
 }
 
-inline FILETIME getLastWriteTime(char *filename)
+static FILETIME getLastWriteTime(char *filename)
 {
 	FILETIME lastWriteTime = {0};
 	WIN32_FILE_ATTRIBUTE_DATA data;
@@ -957,14 +957,14 @@ static void processPendingMessages(struct win32state *state, struct gameControll
 	}
 }
 
-inline LARGE_INTEGER getWallClock(void)
+static LARGE_INTEGER getWallClock(void)
 {
 	LARGE_INTEGER result;
 	QueryPerformanceCounter(&result);
 	return result;
 }
 
-inline float getSecondsElapsed(LARGE_INTEGER start, LARGE_INTEGER end, int64_t perfCountFrequency)
+static float getSecondsElapsed(LARGE_INTEGER start, LARGE_INTEGER end, int64_t perfCountFrequency)
 {
 	float result = ((float)(end.QuadPart - start.QuadPart) / (float)perfCountFrequency);
 	return result;
