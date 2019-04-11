@@ -50,6 +50,13 @@ static void shipReset(void)
 	ship.position.y = 0;
 	ship.position.dx = 0;
 	ship.position.dy = 0;
+	//ship.position.coords[0].x = 0.0f;
+	//ship.position.coords[0].y = -4.0f;
+	//ship.position.coords[1].x = -4.0f;
+	//ship.position.coords[1].y = 4.0f;
+	//ship.position.coords[2].x = 4.0f;
+	//ship.position.coords[2].y = 4.0f;
+
 	ship.position.coords[0].x = 0.0f;
 	ship.position.coords[0].y = 0.0f;
 	ship.position.coords[1].x = -4.0f;
@@ -85,7 +92,6 @@ static void line(struct gameDisplayBuffer *buffer, int startCol, int startRow, i
 // draw coloured line from start point to end point
 static void lineHigh(struct gameDisplayBuffer *buffer, int startCol, int startRow, int endCol, int endRow, uint32_t colour)
 {
-	++endRow;
 	int colGap = endCol - startCol;
 	int rowGap = endRow - startRow;
 	int step = 1;
@@ -116,7 +122,6 @@ static void lineHigh(struct gameDisplayBuffer *buffer, int startCol, int startRo
 // draw coloured line from start point to end point
 static void lineLow(struct gameDisplayBuffer *buffer, int startCol, int startRow, int endCol, int endRow, uint32_t colour)
 {
-	++endCol;
 	int colGap = endCol - startCol;
 	int rowGap = endRow - startRow;
 	int step = 1;
@@ -269,106 +274,93 @@ static void drawDebugLines(struct gameDisplayBuffer *buffer)
 	}
 }
 
-static void drawInfo(struct gameDisplayBuffer *buffer, struct gameState *state, uint32_t colour)
+static void drawDigits(struct gameDisplayBuffer *buffer, short col, short row, float v, uint32_t colour)
 {
-	if (state->score > 9)
-		state->score = 0;
+	int value = abs((int)v);
+	int hundreds = (int)value / 100;
+	int tens = ((int)value % 100) / 10;
+	int ones = ((int)value % 100) % 10;
 
-	switch (state->score)
+	drawDigit(buffer, col, row, hundreds, colour);
+	drawDigit(buffer, col + 4, row, tens, colour);
+	drawDigit(buffer, col + 8, row, ones, colour);
+}
+
+static void drawDigit(struct gameDisplayBuffer *buffer, short col, short row, short digit, uint32_t colour)
+{
+	switch (digit)
 	{
 		case 0:
-			blob(buffer, 1, 0, colour); blob(buffer, 2, 0, colour); blob(buffer, 3, 0, colour);
-			blob(buffer, 1, 1, colour);								blob(buffer, 3, 1, colour);
-			blob(buffer, 1, 2, colour);								blob(buffer, 3, 2, colour);
-			blob(buffer, 1, 3, colour);								blob(buffer, 3, 3, colour);
-			blob(buffer, 1, 4, colour); blob(buffer, 2, 4, colour); blob(buffer, 3, 4, colour);
+			blob(buffer, col, row + 0, colour); blob(buffer, col + 1, row + 0, colour); blob(buffer, col + 2, row + 0, colour);
+			blob(buffer, col, row + 1, colour);											blob(buffer, col + 2, row + 1, colour);
+			blob(buffer, col, row + 2, colour);											blob(buffer, col + 2, row + 2, colour);
+			blob(buffer, col, row + 3, colour);											blob(buffer, col + 2, row + 3, colour);
+			blob(buffer, col, row + 4, colour); blob(buffer, col + 1, row + 4, colour); blob(buffer, col + 2, row + 4, colour);
 			break;
 		case 1:
-			blob(buffer, 2, 0, colour);
-			blob(buffer, 2, 1, colour);
-			blob(buffer, 2, 2, colour);
-			blob(buffer, 2, 3, colour);
-			blob(buffer, 2, 4, colour);
+												blob(buffer, col + 1, row + 0, colour);
+												blob(buffer, col + 1, row + 1, colour);
+												blob(buffer, col + 1, row + 2, colour);
+												blob(buffer, col + 1, row + 3, colour);
+												blob(buffer, col + 1, row + 4, colour);
 			break;
 		case 2:
-			blob(buffer, 1, 0, colour); blob(buffer, 2, 0, colour); blob(buffer, 3, 0, colour);
-																	blob(buffer, 3, 1, colour);
-			blob(buffer, 1, 2, colour); blob(buffer, 2, 2, colour); blob(buffer, 3, 2, colour);
-			blob(buffer, 1, 3, colour);
-			blob(buffer, 1, 4, colour); blob(buffer, 2, 4, colour); blob(buffer, 3, 4, colour);
+			blob(buffer, col, row + 0, colour); blob(buffer, col + 1, row + 0, colour); blob(buffer, col + 2, row + 0, colour);
+																						blob(buffer, col + 2, row + 1, colour);
+			blob(buffer, col, row + 2, colour); blob(buffer, col + 1, row + 2, colour); blob(buffer, col + 2, row + 2, colour);
+			blob(buffer, col, row + 3, colour);
+			blob(buffer, col, row + 4, colour); blob(buffer, col + 1, row + 4, colour); blob(buffer, col + 2, row + 4, colour);
 			break;
 		case 3:
-			blob(buffer, 1, 0, colour); blob(buffer, 2, 0, colour); blob(buffer, 3, 0, colour);
-																	blob(buffer, 3, 1, colour);
-										blob(buffer, 2, 2, colour); blob(buffer, 3, 2, colour);
-																	blob(buffer, 3, 3, colour);
-			blob(buffer, 1, 4, colour); blob(buffer, 2, 4, colour); blob(buffer, 3, 4, colour);
+			blob(buffer, col, row + 0, colour); blob(buffer, col + 1, row + 0, colour); blob(buffer, col + 2, row + 0, colour);
+																						blob(buffer, col + 2, row + 1, colour);
+												blob(buffer, col + 1, row + 2, colour); blob(buffer, col + 2, row + 2, colour);
+																						blob(buffer, col + 2, row + 3, colour);
+			blob(buffer, col, row + 4, colour); blob(buffer, col + 1, row + 4, colour); blob(buffer, col + 2, row + 4, colour);
 			break;
 		case 4:
-			blob(buffer, 1, 0, colour);								blob(buffer, 3, 0, colour);
-			blob(buffer, 1, 1, colour);								blob(buffer, 3, 1, colour);
-			blob(buffer, 1, 2, colour); blob(buffer, 2, 2, colour); blob(buffer, 3, 2, colour);
-																	blob(buffer, 3, 3, colour);
-																	blob(buffer, 3, 4, colour);
+			blob(buffer, col, row + 0, colour);											blob(buffer, col + 2, row + 0, colour);
+			blob(buffer, col, row + 1, colour);											blob(buffer, col + 2, row + 1, colour);
+			blob(buffer, col, row + 2, colour); blob(buffer, col + 1, row + 2, colour); blob(buffer, col + 2, row + 2, colour);
+																						blob(buffer, col + 2, row + 3, colour);
+																						blob(buffer, col + 2, row + 4, colour);
 			break;
 		case 5:
-			blob(buffer, 1, 0, colour); blob(buffer, 2, 0, colour); blob(buffer, 3, 0, colour);
-			blob(buffer, 1, 1, colour);
-			blob(buffer, 1, 2, colour); blob(buffer, 2, 2, colour); blob(buffer, 3, 2, colour);
-																	blob(buffer, 3, 3, colour);
-			blob(buffer, 1, 4, colour); blob(buffer, 2, 4, colour); blob(buffer, 3, 4, colour);
+			blob(buffer, col, row + 0, colour); blob(buffer, col + 1, row + 0, colour); blob(buffer, col + 2, row + 0, colour);
+			blob(buffer, col, row + 1, colour);
+			blob(buffer, col, row + 2, colour); blob(buffer, col + 1, row + 2, colour); blob(buffer, col + 2, row + 2, colour);
+																						blob(buffer, col + 2, row + 3, colour);
+			blob(buffer, col, row + 4, colour); blob(buffer, col + 1, row + 4, colour); blob(buffer, col + 2, row + 4, colour);
 			break;
 		case 6:
-			blob(buffer, 1, 0, colour);
-			blob(buffer, 1, 1, colour);
-			blob(buffer, 1, 2, colour); blob(buffer, 2, 2, colour); blob(buffer, 3, 2, colour);
-			blob(buffer, 1, 3, colour);								blob(buffer, 3, 3, colour);
-			blob(buffer, 1, 4, colour); blob(buffer, 2, 4, colour); blob(buffer, 3, 4, colour);
+			blob(buffer, col, row + 0, colour);
+			blob(buffer, col, row + 1, colour);
+			blob(buffer, col, row + 2, colour); blob(buffer, col + 1, row + 2, colour); blob(buffer, col + 2, row + 2, colour);
+			blob(buffer, col, row + 3, colour);											blob(buffer, col + 2, row + 3, colour);
+			blob(buffer, col, row + 4, colour); blob(buffer, col + 1, row + 4, colour); blob(buffer, col + 2, row + 4, colour);
 			break;
 		case 7:
-			blob(buffer, 1, 0, colour); blob(buffer, 2, 0, colour); blob(buffer, 3, 0, colour);
-																	blob(buffer, 3, 1, colour);
-																	blob(buffer, 3, 2, colour);
-																	blob(buffer, 3, 3, colour);
-																	blob(buffer, 3, 4, colour);
+			blob(buffer, col, row + 0, colour); blob(buffer, col + 1, row + 0, colour); blob(buffer, col + 2, row + 0, colour);
+																						blob(buffer, col + 2, row + 1, colour);
+																						blob(buffer, col + 2, row + 2, colour);
+																						blob(buffer, col + 2, row + 3, colour);
+																						blob(buffer, col + 2, row + 4, colour);
 			break;
 		case 8:
-			blob(buffer, 1, 0, colour); blob(buffer, 2, 0, colour); blob(buffer, 3, 0, colour);
-			blob(buffer, 1, 1, colour);								blob(buffer, 3, 1, colour);
-			blob(buffer, 1, 2, colour); blob(buffer, 2, 2, colour); blob(buffer, 3, 2, colour);
-			blob(buffer, 1, 3, colour);								blob(buffer, 3, 3, colour);
-			blob(buffer, 1, 4, colour); blob(buffer, 2, 4, colour); blob(buffer, 3, 4, colour);
+			blob(buffer, col, row + 0, colour); blob(buffer, col + 1, row + 0, colour); blob(buffer, col + 2, row + 0, colour);
+			blob(buffer, col, row + 1, colour);											blob(buffer, col + 2, row + 1, colour);
+			blob(buffer, col, row + 2, colour); blob(buffer, col + 1, row + 2, colour); blob(buffer, col + 2, row + 2, colour);
+			blob(buffer, col, row + 3, colour);											blob(buffer, col + 2, row + 3, colour);
+			blob(buffer, col, row + 4, colour); blob(buffer, col + 1, row + 4, colour); blob(buffer, col + 2, row + 4, colour);
 			break;
 		case 9:
-			blob(buffer, 1, 0, colour); blob(buffer, 2, 0, colour); blob(buffer, 3, 0, colour);
-			blob(buffer, 1, 1, colour);								blob(buffer, 3, 1, colour);
-			blob(buffer, 1, 2, colour); blob(buffer, 2, 2, colour); blob(buffer, 3, 2, colour);
-																	blob(buffer, 3, 3, colour);
-																	blob(buffer, 3, 4, colour);
+			blob(buffer, col, row + 0, colour); blob(buffer, col + 1, row + 0, colour); blob(buffer, col + 2, row + 0, colour);
+			blob(buffer, col, row + 1, colour);											blob(buffer, col + 2, row + 1, colour);
+			blob(buffer, col, row + 2, colour); blob(buffer, col + 1, row + 2, colour); blob(buffer, col + 2, row + 2, colour);
+																						blob(buffer, col + 2, row + 3, colour);
+																						blob(buffer, col + 2, row + 4, colour);
 			break;
 	}
-
-	blob(buffer, MAX_COLS - 8, MAX_ROWS - 2, RED);
-	blob(buffer, MAX_COLS - 8, MAX_ROWS - 3, RED);
-	blob(buffer, MAX_COLS - 9, MAX_ROWS - 2, RED);
-	blob(buffer, MAX_COLS - 9, MAX_ROWS - 3, RED);
-
-	if (state->lives > 1)
-	{
-		blob(buffer, MAX_COLS - 5, MAX_ROWS - 2, ORANGE);
-		blob(buffer, MAX_COLS - 5, MAX_ROWS - 3, ORANGE);
-		blob(buffer, MAX_COLS - 6, MAX_ROWS - 2, ORANGE);
-		blob(buffer, MAX_COLS - 6, MAX_ROWS - 3, ORANGE);
-	}
-
-	if (state->lives > 2)
-	{
-		blob(buffer, MAX_COLS - 2, MAX_ROWS - 2, GREEN);
-		blob(buffer, MAX_COLS - 2, MAX_ROWS - 3, GREEN);
-		blob(buffer, MAX_COLS - 3, MAX_ROWS - 2, GREEN);
-		blob(buffer, MAX_COLS - 3, MAX_ROWS - 3, GREEN);
-	}
-
 }
 
 //#pragma comment(linker, "/export:gameUpdateAndRender")
@@ -438,7 +430,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 				//ship.position.coords[0].x -= moveSpeed * input->dtForFrame;
 				//ship.position.coords[1].x -= moveSpeed * input->dtForFrame;
 				//ship.position.coords[2].x -= moveSpeed * input->dtForFrame;
-				if (state->score < 9)
+				if (state->score < 1000)
 					++state->score;
 			}
 			if (controller->actionRight.endedDown)
@@ -479,15 +471,23 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	//drawFrame(buffer, &asteroid.position, asteroid.verts, 3.0, WHITE);
 
 	// draw data info
-	drawInfo(buffer, state, CYAN);
+	drawDigits(buffer, 1, 1, state->score, RED);
+	drawDigit(buffer, 1, 7, state->lives, YELLOW);
+	drawDigits(buffer, 1, 13, ship.position.angle, BLUE);
+	drawDigits(buffer, 1, 19, ship.position.dx, CYAN);
+	drawDigits(buffer, 1, 25, ship.position.dy, CYAN);
 
 	// slow down gradually, temporary!
 	float slowdown = 1.0f;
 	if (ship.position.dx > 0)
 		ship.position.dx -= slowdown * input->dtForFrame;
+	else
+		ship.position.dx += slowdown * input->dtForFrame;
 	if (ship.position.dy > 0)
 		ship.position.dy -= slowdown * input->dtForFrame;
-	   
+	else
+		ship.position.dy += slowdown * input->dtForFrame;
+
 	//TODO check diagonal lines through the centre
 	//TODO fix bug in centre of lines
 	//for (int x = 100, y = 20; x < 150; ++x, ++y)
@@ -499,10 +499,11 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	//line(buffer, 20, 20, -20, -20, WHITE);
 	//line(buffer, 20, 20, 40, 40, BLUE);
 	//line(buffer, -10, -10, -40, -40, GREEN);
+	//line(buffer, -MAX_COLS, -MAX_ROWS, MAX_COLS, MAX_ROWS, ORANGE);
+	//line(buffer, -MAX_COLS, MAX_ROWS, MAX_COLS, -MAX_ROWS, CYAN);
 }
 
 // draw all vertices to form a frame
-//TODO there is a bug drawing the lines at centre position
 static void drawFrame(struct gameDisplayBuffer *buffer, struct Position *position, short verts, float scale, uint32_t colour)
 {
 	assert(verts <= MAX_VERTS);
@@ -539,6 +540,9 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct Position *positio
 	--verts;
 	for (int i = 0; i < verts; ++i)
 	{
+		if (i == 2)
+			colour = BLUE;
+
 		//int j = i + 1;
 		line(buffer,
 			roundFloatToInt32(new_coords[i][0]), roundFloatToInt32(new_coords[i][1]),
@@ -553,8 +557,8 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct Position *positio
 	}
 
 	// draw last vertex line
-	 line(buffer,
-	 	 roundFloatToInt32(new_coords[verts][0]), roundFloatToInt32(new_coords[verts][1]),
-	 	 roundFloatToInt32(new_coords[0][0]), roundFloatToInt32(new_coords[0][1]),
-	 	 BLUE);
+	line(buffer,
+		roundFloatToInt32(new_coords[verts][0]), roundFloatToInt32(new_coords[verts][1]),
+		roundFloatToInt32(new_coords[0][0]), roundFloatToInt32(new_coords[0][1]),
+		BLUE);
 }

@@ -56,7 +56,8 @@ void lineHigh(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
 void blob(struct gameDisplayBuffer *, int, int, uint32_t);
 void drawFrame(struct gameDisplayBuffer *, struct Position *, short, float, uint32_t);
 //void wrapCoordinates(float, float, float *, float *);
-void drawInfo(struct gameDisplayBuffer *, struct gameState *, uint32_t);
+void drawDigit(struct gameDisplayBuffer *, short, short, short, uint32_t);
+void drawDigits(struct gameDisplayBuffer *, short, short, float, uint32_t);
 
 struct threadContext
 {
