@@ -37,15 +37,13 @@
 #define ORANGE 0x00FFA500
 
 // manual function definitions
-#define GAME_UPDATE_AND_RENDER(name) void name(struct threadContext *thread, struct gameMemory *memory, struct gameInput *input, struct gameDisplayBuffer *buffer)
+#define GAME_UPDATE_AND_RENDER(name) void name(struct threadContext *thread, struct gameMemory *memory, struct gameInput *input, struct gameDisplayBuffer *buffer, float FPS)
 #define GAME_GET_SOUND_SAMPLES(name) void name(struct threadContext *thread, struct gameMemory *memory, struct gameSoundOutputBuffer *soundBuffer)
 
 // function typedefs
 typedef GAME_UPDATE_AND_RENDER(game_UpdateAndRender);
 typedef GAME_GET_SOUND_SAMPLES(game_GetSoundSamples);
 
-int32_t roundFloatToInt32(float);
-int32_t roundFloatToUInt32(float);
 int offsetCol(int);
 int offsetRow(int);
 void outputSound(struct gameState *, struct gameSoundOutputBuffer *, int);
@@ -54,8 +52,8 @@ void line(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
 void lineLow(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
 void lineHigh(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
 void blob(struct gameDisplayBuffer *, int, int, uint32_t);
-void drawFrame(struct gameDisplayBuffer *, struct Position *, short, float, uint32_t);
-//void wrapCoordinates(float, float, float *, float *);
+void drawFrame(struct gameDisplayBuffer *, struct gameState *, struct Position *, short, float, uint32_t);
+//void wrapCoordinates(int, int, int *, int *);
 void drawDigit(struct gameDisplayBuffer *, short, short, short, uint32_t);
 void drawDigits(struct gameDisplayBuffer *, short, short, float, uint32_t);
 
@@ -84,6 +82,7 @@ struct gameState
 {
 	short lives;
 	short score;
+	bool hud;
 };
 
 struct gameMemory
@@ -110,7 +109,7 @@ struct gameControllerInput
 
 	union
 	{
-		struct gameButtonState buttons[12];
+		struct gameButtonState buttons[13];
 		struct
 		{
 			struct gameButtonState moveUp;
@@ -126,6 +125,7 @@ struct gameControllerInput
 			struct gameButtonState leftShoulder;
 			struct gameButtonState rightShoulder;
 
+			struct gameButtonState hud;
 			struct gameButtonState back;
 			struct gameButtonState start;
 			//
@@ -162,8 +162,6 @@ struct Position
 	float x;
 	float y;
 	float angle;
-	// float coords[MAX_VERTS][2];
-//TODO convert to use this instead
 	struct Coords coords[MAX_VERTS];
 };
 

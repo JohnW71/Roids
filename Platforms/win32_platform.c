@@ -166,7 +166,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 #endif
 	struct gameMemory memory = {0};
 	memory.permanentStorageSize = megabytes(16);
-	memory.transientStorageSize = megabytes(16); //gigabytes(1);
+	memory.transientStorageSize = megabytes(16);
 	state.totalSize = memory.permanentStorageSize + memory.transientStorageSize;
 	state.gameMemoryBlock = VirtualAlloc(baseAddress, (size_t)state.totalSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 
@@ -197,6 +197,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 	running = true;
 	paused = false;
+	float FPS = 0.0f;
 
 	//uint64_t lastCycleCount = __rdtsc();
 
@@ -326,7 +327,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 			// update display
 			if (game.updateAndRender)
-				game.updateAndRender(&thread, &memory, newInput, &gameBuffer);
+				game.updateAndRender(&thread, &memory, newInput, &gameBuffer, FPS);
 			else
 				outs("game.updateAndRender is null!");
 
@@ -417,6 +418,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 					DWORD sleepMs = (DWORD)(1000.0f * (targetSecondsPerFrame - secondsElapsedForFrame));
 					if (sleepMs > 0)
 						Sleep(sleepMs);
+					FPS = (float)sleepMs;
 				}
 
 				float testSecondsElapsedForFrame = getSecondsElapsed(lastCounter, getWallClock(), perfCountFrequency);
@@ -917,6 +919,8 @@ static void processPendingMessages(struct win32state *state, struct gameControll
 						processKeyboardMessage(&keyboardController->leftShoulder, isDown);
 					else if (VKCode == 'E')
 						processKeyboardMessage(&keyboardController->rightShoulder, isDown);
+					else if (VKCode == 'H')
+						processKeyboardMessage(&keyboardController->hud, isDown);
 					else if (VKCode == VK_UP)
 						processKeyboardMessage(&keyboardController->actionUp, isDown);
 					else if (VKCode == VK_DOWN)
