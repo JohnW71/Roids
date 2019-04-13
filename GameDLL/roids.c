@@ -133,10 +133,10 @@ static void lineLow(struct gameDisplayBuffer *buffer, int startCol, int startRow
 static int offsetCol(int coord)
 {
 	int result = (MAX_COLS / 2) + coord;
-	if (result >= MAX_COLS)
-		result = MAX_COLS - 1;
-	if (result < 0)
-		result = 0;
+	//if (result >= MAX_COLS)
+	//	result = MAX_COLS - 1;
+	//if (result < 0)
+	//	result = 0;
 	return result;
 }
 
@@ -144,30 +144,57 @@ static int offsetCol(int coord)
 static int offsetRow(int coord)
 {
 	int result = (MAX_ROWS / 2) + coord;
-	if (result >= MAX_ROWS)
-		result = MAX_ROWS - 1;
-	if (result < 0)
-		result = 0;
+	//if (result >= MAX_ROWS)
+	//	result = MAX_ROWS - 1;
+	//if (result < 0)
+	//	result = 0;
 	return result;
 }
 
 // toroidal wrapping
 //static void wrapCoordinates(float xIn, float yIn, float *xOut, float *yOut)
 //{
-//	//xOut = xIn;
-//	//yOut = yIn;
-//
 //	if (xIn < 0.0f)
-//		*xOut = xIn + (float)WINDOW_WIDTH;
+//		*xOut = xIn + MAX_COLS;
 //
-//	if (xIn >= 0.0f)
-//		*xOut = xIn - (float)WINDOW_WIDTH;
+//	if (xIn >= MAX_COLS)
+//		*xOut = xIn - MAX_COLS;
 //
 //	if (yIn < 0.0f)
-//		*yOut = yIn + (float)WINDOW_HEIGHT;
+//		*yOut = yIn + MAX_ROWS;
 //
-//	if (yIn >= (float)WINDOW_HEIGHT)
-//		*yOut = yIn - (float)WINDOW_HEIGHT;
+//	if (yIn >= MAX_ROWS)
+//		*yOut = yIn - MAX_ROWS;
+//}
+
+//static void wrapCoordinates(float xIn, float yIn, float *xOut, float *yOut)
+//{
+//	if (xIn < 0.0f)
+//		*xOut = xIn + WINDOW_WIDTH;
+//
+//	if (xIn >= WINDOW_WIDTH)
+//		*xOut = xIn - WINDOW_WIDTH;
+//
+//	if (yIn < 0.0f)
+//		*yOut = yIn + WINDOW_HEIGHT;
+//
+//	if (yIn >= WINDOW_HEIGHT)
+//		*yOut = yIn - WINDOW_HEIGHT;
+//}
+
+//static void wrapCoordinates(int xIn, int yIn, int *xOut, int *yOut)
+//{
+//	if (xIn < 0)
+//		*xOut = xIn + MAX_COLS;
+//
+//	if (xIn >= MAX_COLS)
+//		*xOut = xIn - MAX_COLS;
+//
+//	if (yIn < 0)
+//		*yOut = yIn + MAX_ROWS;
+//
+//	if (yIn >= MAX_ROWS)
+//		*yOut = yIn - MAX_ROWS;
 //}
 
 // draw coloured square at specified position
@@ -179,7 +206,7 @@ static void blob(struct gameDisplayBuffer *buffer, int col, int row, uint32_t co
 	if (col >= MAX_COLS || row >= MAX_ROWS)
 		return;
 
-	//wrapCoordinates(col, row, &col, &row);
+	//wrapCoordinates((float)col, (float)row, (float *)&col, (float *)&row);
 
 	uint32_t *pixel = (uint32_t *)buffer->memory;
 	pixel += (row * WINDOW_WIDTH * ROW_HEIGHT) + (col * COL_WIDTH);
@@ -281,38 +308,38 @@ static void drawDigit(struct gameDisplayBuffer *buffer, short col, short row, sh
 			blob(buffer, col, row + 4, colour); blob(buffer, col + 1, row + 4, colour); blob(buffer, col + 2, row + 4, colour);
 			break;
 		case 1:
-												blob(buffer, col + 1, row + 0, colour);
-												blob(buffer, col + 1, row + 1, colour);
-												blob(buffer, col + 1, row + 2, colour);
-												blob(buffer, col + 1, row + 3, colour);
-												blob(buffer, col + 1, row + 4, colour);
+			blob(buffer, col + 1, row + 0, colour);
+			blob(buffer, col + 1, row + 1, colour);
+			blob(buffer, col + 1, row + 2, colour);
+			blob(buffer, col + 1, row + 3, colour);
+			blob(buffer, col + 1, row + 4, colour);
 			break;
 		case 2:
 			blob(buffer, col, row + 0, colour); blob(buffer, col + 1, row + 0, colour); blob(buffer, col + 2, row + 0, colour);
-																						blob(buffer, col + 2, row + 1, colour);
+			blob(buffer, col + 2, row + 1, colour);
 			blob(buffer, col, row + 2, colour); blob(buffer, col + 1, row + 2, colour); blob(buffer, col + 2, row + 2, colour);
 			blob(buffer, col, row + 3, colour);
 			blob(buffer, col, row + 4, colour); blob(buffer, col + 1, row + 4, colour); blob(buffer, col + 2, row + 4, colour);
 			break;
 		case 3:
 			blob(buffer, col, row + 0, colour); blob(buffer, col + 1, row + 0, colour); blob(buffer, col + 2, row + 0, colour);
-																						blob(buffer, col + 2, row + 1, colour);
-												blob(buffer, col + 1, row + 2, colour); blob(buffer, col + 2, row + 2, colour);
-																						blob(buffer, col + 2, row + 3, colour);
+			blob(buffer, col + 2, row + 1, colour);
+			blob(buffer, col + 1, row + 2, colour); blob(buffer, col + 2, row + 2, colour);
+			blob(buffer, col + 2, row + 3, colour);
 			blob(buffer, col, row + 4, colour); blob(buffer, col + 1, row + 4, colour); blob(buffer, col + 2, row + 4, colour);
 			break;
 		case 4:
 			blob(buffer, col, row + 0, colour);											blob(buffer, col + 2, row + 0, colour);
 			blob(buffer, col, row + 1, colour);											blob(buffer, col + 2, row + 1, colour);
 			blob(buffer, col, row + 2, colour); blob(buffer, col + 1, row + 2, colour); blob(buffer, col + 2, row + 2, colour);
-																						blob(buffer, col + 2, row + 3, colour);
-																						blob(buffer, col + 2, row + 4, colour);
+			blob(buffer, col + 2, row + 3, colour);
+			blob(buffer, col + 2, row + 4, colour);
 			break;
 		case 5:
 			blob(buffer, col, row + 0, colour); blob(buffer, col + 1, row + 0, colour); blob(buffer, col + 2, row + 0, colour);
 			blob(buffer, col, row + 1, colour);
 			blob(buffer, col, row + 2, colour); blob(buffer, col + 1, row + 2, colour); blob(buffer, col + 2, row + 2, colour);
-																						blob(buffer, col + 2, row + 3, colour);
+			blob(buffer, col + 2, row + 3, colour);
 			blob(buffer, col, row + 4, colour); blob(buffer, col + 1, row + 4, colour); blob(buffer, col + 2, row + 4, colour);
 			break;
 		case 6:
@@ -324,10 +351,10 @@ static void drawDigit(struct gameDisplayBuffer *buffer, short col, short row, sh
 			break;
 		case 7:
 			blob(buffer, col, row + 0, colour); blob(buffer, col + 1, row + 0, colour); blob(buffer, col + 2, row + 0, colour);
-																						blob(buffer, col + 2, row + 1, colour);
-																						blob(buffer, col + 2, row + 2, colour);
-																						blob(buffer, col + 2, row + 3, colour);
-																						blob(buffer, col + 2, row + 4, colour);
+			blob(buffer, col + 2, row + 1, colour);
+			blob(buffer, col + 2, row + 2, colour);
+			blob(buffer, col + 2, row + 3, colour);
+			blob(buffer, col + 2, row + 4, colour);
 			break;
 		case 8:
 			blob(buffer, col, row + 0, colour); blob(buffer, col + 1, row + 0, colour); blob(buffer, col + 2, row + 0, colour);
@@ -340,8 +367,8 @@ static void drawDigit(struct gameDisplayBuffer *buffer, short col, short row, sh
 			blob(buffer, col, row + 0, colour); blob(buffer, col + 1, row + 0, colour); blob(buffer, col + 2, row + 0, colour);
 			blob(buffer, col, row + 1, colour);											blob(buffer, col + 2, row + 1, colour);
 			blob(buffer, col, row + 2, colour); blob(buffer, col + 1, row + 2, colour); blob(buffer, col + 2, row + 2, colour);
-																						blob(buffer, col + 2, row + 3, colour);
-																						blob(buffer, col + 2, row + 4, colour);
+			blob(buffer, col + 2, row + 3, colour);
+			blob(buffer, col + 2, row + 4, colour);
 			break;
 	}
 }
@@ -494,37 +521,16 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
 	// slow down gradually, temporary!
 	//float slowdown = 1.0f;
-	
+
 	//if (ship.position.dx > 0)
 	//	ship.position.dx -= slowdown * input->dtForFrame;
 	//else
 	//	ship.position.dx += slowdown * input->dtForFrame;
-	
+
 	//if (ship.position.dy > 0)
 	//	ship.position.dy -= slowdown * input->dtForFrame;
 	//else
 	//	ship.position.dy += slowdown * input->dtForFrame;
-
-
-	//middle
-	line(buffer, 0, -6, -6, 6, GREEN);
-	line(buffer, -6, 6, 6, 6, BLUE);
-	line(buffer, 6, 6, 0, -6, RED);
-
-	// right
-	line(buffer, 20, -6, 14, 6, GREEN);
-	line(buffer, 14, 6, 26,  6, BLUE);
-	line(buffer, 26, 6, 20, -6, RED);
-
-	// top
-	line(buffer, 0, -30, -6, -18, GREEN);
-	line(buffer, -6, -18, 6, -18, BLUE);
-	line(buffer, 6, -18, 0, -30, RED);
-
-	// bottom
-	line(buffer, 32, 20, 26, 32, GREEN);
-	line(buffer, -6, 32, 6, 32, BLUE);
-	line(buffer, 4, 32, -1, 20, RED);
 }
 
 // draw all vertices to form a frame
@@ -558,8 +564,10 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	// update scale
 	for (int i = 0; i < verts; ++i)
 	{
-		new_coords[i][0] *= scale;
-		new_coords[i][1] *= scale;
+		new_coords[i][0] = roundf(new_coords[i][0] * scale);
+		new_coords[i][1] = roundf(new_coords[i][1] * scale);
+		//new_coords[i][0] *= scale;
+		//new_coords[i][1] *= scale;
 	}
 
 	//scaled coords
@@ -576,8 +584,10 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	// translate co-ordinates
 	for (int i = 0; i < verts; ++i)
 	{
-		new_coords[i][0] += position->x;
-		new_coords[i][1] += position->y;
+		new_coords[i][0] += roundf(position->x);
+		new_coords[i][1] += roundf(position->y);
+		//new_coords[i][0] += position->x;
+		//new_coords[i][1] += position->y;
 	}
 
 	//translated coords
@@ -602,7 +612,7 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 		else
 			colour = original;
 
-		line(buffer, 
+		line(buffer,
 			(int)new_coords[i][0], (int)new_coords[i][1],
 			(int)new_coords[i + 1][0], (int)new_coords[i + 1][1],
 			colour);
