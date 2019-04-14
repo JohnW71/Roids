@@ -152,61 +152,44 @@ static int offsetRow(int coord)
 }
 
 // toroidal wrapping
-//static void wrapCoordinates(float xIn, float yIn, float *xOut, float *yOut)
-//{
-//	if (xIn < 0.0f)
-//		*xOut = xIn + MAX_COLS;
-//
-//	if (xIn >= MAX_COLS)
-//		*xOut = xIn - MAX_COLS;
-//
-//	if (yIn < 0.0f)
-//		*yOut = yIn + MAX_ROWS;
-//
-//	if (yIn >= MAX_ROWS)
-//		*yOut = yIn - MAX_ROWS;
-//}
+static void wrapCoordinates(int xIn, int yIn, int *xOut, int *yOut)
+{
 
-//static void wrapCoordinates(float xIn, float yIn, float *xOut, float *yOut)
-//{
-//	if (xIn < 0.0f)
-//		*xOut = xIn + WINDOW_WIDTH;
-//
-//	if (xIn >= WINDOW_WIDTH)
-//		*xOut = xIn - WINDOW_WIDTH;
-//
-//	if (yIn < 0.0f)
-//		*yOut = yIn + WINDOW_HEIGHT;
-//
-//	if (yIn >= WINDOW_HEIGHT)
-//		*yOut = yIn - WINDOW_HEIGHT;
-//}
+	if (xIn < 0)
+		*xOut = xIn + MAX_COLS;
 
-//static void wrapCoordinates(int xIn, int yIn, int *xOut, int *yOut)
-//{
-//	if (xIn < 0)
-//		*xOut = xIn + MAX_COLS;
-//
-//	if (xIn >= MAX_COLS)
-//		*xOut = xIn - MAX_COLS;
-//
-//	if (yIn < 0)
-//		*yOut = yIn + MAX_ROWS;
-//
-//	if (yIn >= MAX_ROWS)
-//		*yOut = yIn - MAX_ROWS;
-//}
+	if (xIn > MAX_COLS)
+		*xOut = xIn - MAX_COLS;
+
+	if (yIn <= -MAX_ROWS)
+	{
+		*yOut = MAX_ROWS-1;
+		yIn = MAX_ROWS;
+	}
+
+	if ((yIn + MAX_ROWS) < 0)
+	{
+		//TODO fix this wrapping
+		*yOut = yIn + MAX_ROWS;
+	}
+
+	if (yIn < 0)
+		*yOut = yIn + MAX_ROWS;
+
+	if (yIn > MAX_ROWS)
+		*yOut = yIn - MAX_ROWS;
+}
 
 // draw coloured square at specified position
 static void blob(struct gameDisplayBuffer *buffer, int col, int row, uint32_t colour)
 {
-	assert(col < MAX_COLS);
-	assert(row < MAX_ROWS);
+	//assert(col < MAX_COLS);
+	//assert(row < MAX_ROWS);
 
-	if (col >= MAX_COLS || row >= MAX_ROWS)
-		return;
+	//if (col >= MAX_COLS || row >= MAX_ROWS)
+	//	return;
 
-	//wrapCoordinates((float)col, (float)row, (float *)&col, (float *)&row);
+	wrapCoordinates(col, row, &col, &row);
 
 	uint32_t *pixel = (uint32_t *)buffer->memory;
 	pixel += (row * WINDOW_WIDTH * ROW_HEIGHT) + (col * COL_WIDTH);
@@ -418,13 +401,13 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 			//TODO get thrust working then remove these
 			if (controller->actionUp.endedDown)
 			{
-				ship.position.coords[0].y -= moveSpeed * input->dtForFrame;
-				ship.position.coords[1].y -= moveSpeed * input->dtForFrame;
-				ship.position.coords[2].y -= moveSpeed * input->dtForFrame;
+				//ship.position.coords[0].y -= moveSpeed * input->dtForFrame;
+				//ship.position.coords[1].y -= moveSpeed * input->dtForFrame;
+				//ship.position.coords[2].y -= moveSpeed * input->dtForFrame;
 
 				// acceleration changes velocity over time
-				//ship.position.dx += sinf(ship.position.angle) * moveSpeed * input->dtForFrame;
-				//ship.position.dy += -cosf(ship.position.angle) * moveSpeed * input->dtForFrame;
+				ship.position.dx += sinf(ship.position.angle) * moveSpeed * input->dtForFrame;
+				ship.position.dy += -cosf(ship.position.angle) * moveSpeed * input->dtForFrame;
 			}
 			if (controller->actionDown.endedDown)
 			{
@@ -499,24 +482,24 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		drawDigits(buffer, 15, 22, ship.position.y, CYAN);
 
 		//thrust
-		drawDigits(buffer, 1, 28, ship.position.dx, CYAN);
-		drawDigits(buffer, 15, 28, ship.position.dy, CYAN);
-
-		//v1
-		drawDigits(buffer, 1, 35, ship.position.coords[0].x, YELLOW);
-		drawDigits(buffer, 15, 35, ship.position.coords[0].y, YELLOW);
-
-		//v2
-		drawDigits(buffer, 1, 41, ship.position.coords[1].x, YELLOW);
-		drawDigits(buffer, 15, 41, ship.position.coords[1].y, YELLOW);
-
-		//v3
-		drawDigits(buffer, 1, 47, ship.position.coords[2].x, YELLOW);
-		drawDigits(buffer, 15, 47, ship.position.coords[2].y, YELLOW);
+		drawDigits(buffer, 1, 28, ship.position.dx, ORANGE);
+		drawDigits(buffer, 15, 28, ship.position.dy, ORANGE);
 
 		//size
-		drawDigits(buffer, 1, 54, MAX_COLS, ORANGE);
-		drawDigits(buffer, 15, 54, MAX_ROWS, ORANGE);
+		drawDigits(buffer, 1, 34, MAX_COLS, ORANGE);
+		drawDigits(buffer, 15, 34, MAX_ROWS, ORANGE);
+
+		//vec1
+		drawDigits(buffer, 1, 41, ship.position.coords[0].x, YELLOW);
+		drawDigits(buffer, 15, 41, ship.position.coords[0].y, YELLOW);
+
+		//vec2
+		drawDigits(buffer, 35, 41, ship.position.coords[1].x, YELLOW);
+		drawDigits(buffer, 49, 41, ship.position.coords[1].y, YELLOW);
+
+		//vec3
+		drawDigits(buffer, 70, 41, ship.position.coords[2].x, YELLOW);
+		drawDigits(buffer, 84, 41, ship.position.coords[2].y, YELLOW);
 	}
 
 	// slow down gradually, temporary!
@@ -553,12 +536,12 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	//rotated coords
 	if (state->hud)
 	{
-		drawDigits(buffer, 1, 61, new_coords[0][0], GREEN);
-		drawDigits(buffer, 15, 61, new_coords[0][1], GREEN);
-		drawDigits(buffer, 35, 61, new_coords[1][0], GREEN);
-		drawDigits(buffer, 49, 61, new_coords[1][1], GREEN);
-		drawDigits(buffer, 70, 61, new_coords[2][0], GREEN);
-		drawDigits(buffer, 84, 61, new_coords[2][1], GREEN);
+		drawDigits(buffer, 1, 48, new_coords[0][0], GREEN);
+		drawDigits(buffer, 15, 48, new_coords[0][1], GREEN);
+		drawDigits(buffer, 35, 48, new_coords[1][0], GREEN);
+		drawDigits(buffer, 49, 48, new_coords[1][1], GREEN);
+		drawDigits(buffer, 70, 48, new_coords[2][0], GREEN);
+		drawDigits(buffer, 84, 48, new_coords[2][1], GREEN);
 	}
 
 	// update scale
@@ -573,12 +556,12 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	//scaled coords
 	if (state->hud)
 	{
-		drawDigits(buffer, 1, 67, new_coords[0][0], CYAN);
-		drawDigits(buffer, 15, 67, new_coords[0][1], CYAN);
-		drawDigits(buffer, 35, 67, new_coords[1][0], CYAN);
-		drawDigits(buffer, 49, 67, new_coords[1][1], CYAN);
-		drawDigits(buffer, 70, 67, new_coords[2][0], CYAN);
-		drawDigits(buffer, 84, 67, new_coords[2][1], CYAN);
+		drawDigits(buffer, 1, 54, new_coords[0][0], CYAN);
+		drawDigits(buffer, 15, 54, new_coords[0][1], CYAN);
+		drawDigits(buffer, 35, 54, new_coords[1][0], CYAN);
+		drawDigits(buffer, 49, 54, new_coords[1][1], CYAN);
+		drawDigits(buffer, 70, 54, new_coords[2][0], CYAN);
+		drawDigits(buffer, 84, 54, new_coords[2][1], CYAN);
 	}
 
 	// translate co-ordinates
@@ -593,12 +576,12 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	//translated coords
 	if (state->hud)
 	{
-		drawDigits(buffer, 1, 73, new_coords[0][0], ORANGE);
-		drawDigits(buffer, 15, 73, new_coords[0][1], ORANGE);
-		drawDigits(buffer, 35, 73, new_coords[1][0], ORANGE);
-		drawDigits(buffer, 49, 73, new_coords[1][1], ORANGE);
-		drawDigits(buffer, 70, 73, new_coords[2][0], ORANGE);
-		drawDigits(buffer, 84, 73, new_coords[2][1], ORANGE);
+		drawDigits(buffer, 1, 60, new_coords[0][0], ORANGE);
+		drawDigits(buffer, 15, 60, new_coords[0][1], ORANGE);
+		drawDigits(buffer, 35, 60, new_coords[1][0], ORANGE);
+		drawDigits(buffer, 49, 60, new_coords[1][1], ORANGE);
+		drawDigits(buffer, 70, 60, new_coords[2][0], ORANGE);
+		drawDigits(buffer, 84, 60, new_coords[2][1], ORANGE);
 	}
 
 	uint32_t original = colour;
