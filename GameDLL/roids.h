@@ -83,6 +83,7 @@ struct gameState
 	short lives;
 	short score;
 	bool hud;
+	bool fps;
 };
 
 struct gameMemory
@@ -109,7 +110,7 @@ struct gameControllerInput
 
 	union
 	{
-		struct gameButtonState buttons[13];
+		struct gameButtonState buttons[14];
 		struct
 		{
 			struct gameButtonState moveUp;
@@ -125,6 +126,7 @@ struct gameControllerInput
 			struct gameButtonState leftShoulder;
 			struct gameButtonState rightShoulder;
 
+			struct gameButtonState fps;
 			struct gameButtonState hud;
 			struct gameButtonState back;
 			struct gameButtonState start;

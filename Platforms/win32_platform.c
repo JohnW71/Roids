@@ -919,6 +919,8 @@ static void processPendingMessages(struct win32state *state, struct gameControll
 						processKeyboardMessage(&keyboardController->leftShoulder, isDown);
 					else if (VKCode == 'E')
 						processKeyboardMessage(&keyboardController->rightShoulder, isDown);
+					else if (VKCode == 'F')
+						processKeyboardMessage(&keyboardController->fps, isDown);
 					else if (VKCode == 'H')
 						processKeyboardMessage(&keyboardController->hud, isDown);
 					else if (VKCode == VK_UP)

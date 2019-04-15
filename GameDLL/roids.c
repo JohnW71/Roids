@@ -133,10 +133,6 @@ static void lineLow(struct gameDisplayBuffer *buffer, int startCol, int startRow
 static int offsetCol(int coord)
 {
 	int result = (MAX_COLS / 2) + coord;
-	//if (result >= MAX_COLS)
-	//	result = MAX_COLS - 1;
-	//if (result < 0)
-	//	result = 0;
 	return result;
 }
 
@@ -144,34 +140,17 @@ static int offsetCol(int coord)
 static int offsetRow(int coord)
 {
 	int result = (MAX_ROWS / 2) + coord;
-	//if (result >= MAX_ROWS)
-	//	result = MAX_ROWS - 1;
-	//if (result < 0)
-	//	result = 0;
 	return result;
 }
 
 // toroidal wrapping
 static void wrapCoordinates(int xIn, int yIn, int *xOut, int *yOut)
 {
-
 	if (xIn < 0)
 		*xOut = xIn + MAX_COLS;
 
 	if (xIn > MAX_COLS)
 		*xOut = xIn - MAX_COLS;
-
-	if (yIn <= -MAX_ROWS)
-	{
-		*yOut = MAX_ROWS-1;
-		yIn = MAX_ROWS;
-	}
-
-	if ((yIn + MAX_ROWS) < 0)
-	{
-		//TODO fix this wrapping
-		*yOut = yIn + MAX_ROWS;
-	}
 
 	if (yIn < 0)
 		*yOut = yIn + MAX_ROWS;
@@ -183,13 +162,13 @@ static void wrapCoordinates(int xIn, int yIn, int *xOut, int *yOut)
 // draw coloured square at specified position
 static void blob(struct gameDisplayBuffer *buffer, int col, int row, uint32_t colour)
 {
-	//assert(col < MAX_COLS);
-	//assert(row < MAX_ROWS);
-
-	//if (col >= MAX_COLS || row >= MAX_ROWS)
-	//	return;
-
 	wrapCoordinates(col, row, &col, &row);
+
+	if (row <= -MAX_ROWS)
+		row += MAX_ROWS-1;
+
+	if (row >= MAX_ROWS)
+		row = MAX_ROWS-1;
 
 	uint32_t *pixel = (uint32_t *)buffer->memory;
 	pixel += (row * WINDOW_WIDTH * ROW_HEIGHT) + (col * COL_WIDTH);
@@ -373,6 +352,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		state->score = 999;
 		state->lives = 3;
 		state->hud = true;
+		state->fps = true;
 		memory->isInitialized = true;
 		shipReset();
 	}
@@ -397,8 +377,6 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 			if (controller->moveRight.endedDown)
 				ship.position.angle += turnSpeed * input->dtForFrame;
 
-			//TODO test toroidal mapping first
-			//TODO get thrust working then remove these
 			if (controller->actionUp.endedDown)
 			{
 				//ship.position.coords[0].y -= moveSpeed * input->dtForFrame;
@@ -409,24 +387,25 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 				ship.position.dx += sinf(ship.position.angle) * moveSpeed * input->dtForFrame;
 				ship.position.dy += -cosf(ship.position.angle) * moveSpeed * input->dtForFrame;
 			}
-			if (controller->actionDown.endedDown)
-			{
-				ship.position.coords[0].y += moveSpeed * input->dtForFrame;
-				ship.position.coords[1].y += moveSpeed * input->dtForFrame;
-				ship.position.coords[2].y += moveSpeed * input->dtForFrame;
-			}
-			if (controller->actionLeft.endedDown)
-			{
-				ship.position.coords[0].x -= moveSpeed * input->dtForFrame;
-				ship.position.coords[1].x -= moveSpeed * input->dtForFrame;
-				ship.position.coords[2].x -= moveSpeed * input->dtForFrame;
-			}
-			if (controller->actionRight.endedDown)
-			{
-				ship.position.coords[0].x += moveSpeed * input->dtForFrame;
-				ship.position.coords[1].x += moveSpeed * input->dtForFrame;
-				ship.position.coords[2].x += moveSpeed * input->dtForFrame;
-			}
+			//TODO get wrapping working then remove these
+			//if (controller->actionDown.endedDown)
+			//{
+			//	ship.position.coords[0].y += moveSpeed * input->dtForFrame;
+			//	ship.position.coords[1].y += moveSpeed * input->dtForFrame;
+			//	ship.position.coords[2].y += moveSpeed * input->dtForFrame;
+			//}
+			//if (controller->actionLeft.endedDown)
+			//{
+			//	ship.position.coords[0].x -= moveSpeed * input->dtForFrame;
+			//	ship.position.coords[1].x -= moveSpeed * input->dtForFrame;
+			//	ship.position.coords[2].x -= moveSpeed * input->dtForFrame;
+			//}
+			//if (controller->actionRight.endedDown)
+			//{
+			//	ship.position.coords[0].x += moveSpeed * input->dtForFrame;
+			//	ship.position.coords[1].x += moveSpeed * input->dtForFrame;
+			//	ship.position.coords[2].x += moveSpeed * input->dtForFrame;
+			//}
 			if (controller->back.endedDown)
 			{
 				shipReset();
@@ -439,6 +418,14 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 				else
 					state->hud = true;
 				controller->hud.endedDown = false;
+			}
+			if (controller->fps.endedDown)
+			{
+				if (state->fps)
+					state->fps = false;
+				else
+					state->fps = true;
+				controller->fps.endedDown = false;
 			}
 		}
 	}
@@ -461,19 +448,35 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	ship.position.x += ship.position.dx * input->dtForFrame;
 	ship.position.y += ship.position.dy * input->dtForFrame;
 
+	// re-wrap co-ordinates to prevent ever larger positions
+	if (ship.position.x < 0.0f)
+		ship.position.x += MAX_COLS;
+
+	if (ship.position.x > (MAX_COLS / 2))
+		ship.position.x -= MAX_COLS;
+
+	if (ship.position.y < 0.0f)
+		ship.position.y += MAX_ROWS;
+
+	if (ship.position.y > (MAX_ROWS / 2))
+		ship.position.y -= MAX_ROWS;
+
 	// draw models
-	drawFrame(buffer, state, &ship.position, ship.verts, 1.5f, WHITE);
+	drawFrame(buffer, state, &ship.position, ship.verts, 1.2f, WHITE);
 	//drawFrame(buffer, state, &asteroid.position, asteroid.verts, 3.0, WHITE);
 
 	// draw data info
 	drawDigits(buffer, 1, 1, state->score, WHITE);
 	drawDigit(buffer, 1, 7, state->lives, YELLOW);
 
-	if (state->hud)
+	if (state->fps)
 	{
 		//FPS
 		drawDigits(buffer, 230, 1, FPS, BLUE);
+	}
 
+	if (state->hud)
+	{
 		//angle
 		drawDigits(buffer, 1, 15, ship.position.angle, BLUE);
 
@@ -502,18 +505,18 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		drawDigits(buffer, 84, 41, ship.position.coords[2].y, YELLOW);
 	}
 
-	// slow down gradually, temporary!
-	//float slowdown = 1.0f;
+	// slow down gradually, temporary?
+	float slowdown = 1.0f;
 
-	//if (ship.position.dx > 0)
-	//	ship.position.dx -= slowdown * input->dtForFrame;
-	//else
-	//	ship.position.dx += slowdown * input->dtForFrame;
+	if (ship.position.dx > 0.0f)
+		ship.position.dx -= slowdown * input->dtForFrame;
+	else
+		ship.position.dx += slowdown * input->dtForFrame;
 
-	//if (ship.position.dy > 0)
-	//	ship.position.dy -= slowdown * input->dtForFrame;
-	//else
-	//	ship.position.dy += slowdown * input->dtForFrame;
+	if (ship.position.dy > 0.0f)
+		ship.position.dy -= slowdown * input->dtForFrame;
+	else
+		ship.position.dy += slowdown * input->dtForFrame;
 }
 
 // draw all vertices to form a frame
@@ -549,8 +552,6 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	{
 		new_coords[i][0] = roundf(new_coords[i][0] * scale);
 		new_coords[i][1] = roundf(new_coords[i][1] * scale);
-		//new_coords[i][0] *= scale;
-		//new_coords[i][1] *= scale;
 	}
 
 	//scaled coords
@@ -569,8 +570,6 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	{
 		new_coords[i][0] += roundf(position->x);
 		new_coords[i][1] += roundf(position->y);
-		//new_coords[i][0] += position->x;
-		//new_coords[i][1] += position->y;
 	}
 
 	//translated coords
