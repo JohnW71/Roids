@@ -45,6 +45,22 @@ static void shipReset(void)
 	ship.position.coords[2].y = 4.0f;
 }
 
+static void bulletsReset(void)
+{
+	for (int i = 0; i < MAX_BULLETS; ++i)
+		bulletReset(i);
+}
+
+static void bulletReset(int i)
+{
+	bullets[i].alive = false;
+	bullets[i].position.angle = 0;
+	//bullets[i].position.coords->x = 0;
+	//bullets[i].position.coords->y = 0;
+	bullets[i].position.x = 0;
+	bullets[i].position.y = 0;
+}
+
 // draw coloured line from start point to end point
 static void line(struct gameDisplayBuffer *buffer, int startCol, int startRow, int endCol, int endRow, uint32_t colour)
 {
@@ -355,6 +371,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		state->fps = true;
 		memory->isInitialized = true;
 		shipReset();
+		bulletsReset();
 	}
 
 	for (int controllerIndex = 0; controllerIndex < arrayCount(input->controllers); ++controllerIndex)
@@ -372,17 +389,41 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 			if (controller->moveRight.endedDown)
 				ship.position.angle += TURN_SPEED * input->dtForFrame;
 
+			// thrust
 			if (controller->actionUp.endedDown)
 			{
 				// acceleration changes velocity over time
 				ship.position.dx += sinf(ship.position.angle) * MOVE_SPEED * input->dtForFrame;
 				ship.position.dy += -cosf(ship.position.angle) * MOVE_SPEED * input->dtForFrame;
 			}
-			if (controller->back.endedDown)
+
+			// reset
+			if (controller->reset.endedDown)
 			{
 				shipReset();
+				controller->reset.endedDown = false;
+			}
+
+			// shoot
+			if (controller->back.endedDown)
+			{
+				for (int i = 0; i < MAX_BULLETS; ++i)
+				{
+					if (!bullets[i].alive)
+					{
+						bullets[i].alive = true;
+						bullets[i].position.angle = ship.position.angle;
+						//bullets[i].position.coords->x = ship.position.coords->x;
+						//bullets[i].position.coords->y = ship.position.coords->y;
+						bullets[i].position.x = ship.position.x;
+						bullets[i].position.y = ship.position.y;
+					}
+				}
+
 				controller->back.endedDown = false;
 			}
+
+			// hud
 			if (controller->hud.endedDown)
 			{
 				if (state->hud)
@@ -391,6 +432,8 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 					state->hud = true;
 				controller->hud.endedDown = false;
 			}
+
+			// fps
 			if (controller->fps.endedDown)
 			{
 				if (state->fps)
@@ -419,6 +462,21 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	// velocity changes position over time
 	ship.position.x += ship.position.dx * input->dtForFrame;
 	ship.position.y += ship.position.dy * input->dtForFrame;
+	for (int i = 0; i < MAX_BULLETS; ++i)
+		if (bullets[i].alive)
+		{
+			bullets[i].position.x += BULLET_SPEED * input->dtForFrame;
+			bullets[i].position.y += BULLET_SPEED * input->dtForFrame;
+
+			// if gone off screen remove it
+			if (bullets[i].position.x < 0.0f ||
+				bullets[i].position.x >(MAX_COLS / 2) ||
+				bullets[i].position.y < 0.0f ||
+				bullets[i].position.y >(MAX_ROWS / 2))
+			{
+				bulletReset(i);
+			}
+		}
 
 	// re-wrap co-ordinates to prevent ever larger positions
 	if (ship.position.x < 0.0f)
@@ -436,6 +494,9 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	// draw models
 	drawFrame(buffer, state, &ship.position, ship.verts, SHIP_SCALE, WHITE);
 	//drawFrame(buffer, state, &asteroid.position, asteroid.verts, 3.0, WHITE);
+	for (int i = 0; i < MAX_BULLETS; ++i)
+		if (bullets[i].alive)
+			blob(buffer, offsetCol((int)bullets[i].position.x), offsetRow((int)bullets[i].position.x), WHITE);
 
 	// draw data info
 	drawDigits(buffer, 1, 1, state->score, WHITE);
@@ -443,36 +504,36 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
 	if (state->fps)
 	{
-		//fps
+		// fps
 		drawDigits(buffer, MAX_COLS - 15, 1, FPS, BLUE);
 	}
 
 	if (state->hud)
 	{
-		//angle
+		// angle
 		drawDigits(buffer, 1, 15, ship.position.angle, BLUE);
 
-		//position
+		// position
 		drawDigits(buffer, 1, 22, ship.position.x, CYAN);
 		drawDigits(buffer, 15, 22, ship.position.y, CYAN);
 
-		//thrust
+		// thrust
 		drawDigits(buffer, 1, 28, ship.position.dx, ORANGE);
 		drawDigits(buffer, 15, 28, ship.position.dy, ORANGE);
 
-		//size
+		// size
 		drawDigits(buffer, 1, 34, MAX_COLS, ORANGE);
 		drawDigits(buffer, 15, 34, MAX_ROWS, ORANGE);
 
-		//vec1
+		// vec1
 		drawDigits(buffer, 1, 41, ship.position.coords[0].x, YELLOW);
 		drawDigits(buffer, 15, 41, ship.position.coords[0].y, YELLOW);
 
-		//vec2
+		// vec2
 		drawDigits(buffer, 35, 41, ship.position.coords[1].x, YELLOW);
 		drawDigits(buffer, 49, 41, ship.position.coords[1].y, YELLOW);
 
-		//vec3
+		// vec3
 		drawDigits(buffer, 70, 41, ship.position.coords[2].x, YELLOW);
 		drawDigits(buffer, 84, 41, ship.position.coords[2].y, YELLOW);
 	}
@@ -506,7 +567,7 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 		new_coords[i][1] = x * sinf(r) + y * cosf(r);
 	}
 
-	//rotated coords
+	// rotated coords
 	if (state->hud)
 	{
 		drawDigits(buffer, 1, 48, new_coords[0][0], GREEN);
@@ -524,7 +585,7 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 		new_coords[i][1] = roundf(new_coords[i][1] * scale);
 	}
 
-	//scaled coords
+	// scaled coords
 	if (state->hud)
 	{
 		drawDigits(buffer, 1, 54, new_coords[0][0], CYAN);
@@ -542,7 +603,7 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 		new_coords[i][1] += roundf(position->y);
 	}
 
-	//translated coords
+	// translated coords
 	if (state->hud)
 	{
 		drawDigits(buffer, 1, 60, new_coords[0][0], ORANGE);

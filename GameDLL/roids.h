@@ -14,11 +14,13 @@
 #define TURN_SPEED 3.0f
 #define MOVE_SPEED 20.0f
 #define SLOW_SPEED 1.0f
+#define BULLET_SPEED 20.0f
 #define COL_WIDTH 3
 #define ROW_HEIGHT 3
 #define MAX_COLS (WINDOW_WIDTH / COL_WIDTH)
 #define MAX_ROWS (WINDOW_HEIGHT / ROW_HEIGHT)
 #define MAX_VERTS 20
+#define MAX_BULLETS 10
 
 #define Pi32 3.14159265359f
 #define assert(expression) if(!(expression)) {*(int *)0 = 0;}
@@ -52,6 +54,8 @@ int offsetCol(int);
 int offsetRow(int);
 void outputSound(struct gameState *, struct gameSoundOutputBuffer *, int);
 void shipReset(void);
+void bulletReset(int);
+void bulletsReset(void);
 void line(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
 void lineLow(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
 void lineHigh(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
@@ -114,7 +118,7 @@ struct gameControllerInput
 
 	union
 	{
-		struct gameButtonState buttons[14];
+		struct gameButtonState buttons[15];
 		struct
 		{
 			struct gameButtonState moveUp;
@@ -132,6 +136,8 @@ struct gameControllerInput
 
 			struct gameButtonState fps;
 			struct gameButtonState hud;
+			struct gameButtonState reset;
+
 			struct gameButtonState back;
 			struct gameButtonState start;
 			//
@@ -183,3 +189,9 @@ struct Asteroid
 	short verts;
 	struct Position position;
 } asteroid;
+
+struct Bullet
+{
+	bool alive;
+	struct Position position;
+} bullets[MAX_BULLETS];

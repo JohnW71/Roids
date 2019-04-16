@@ -923,6 +923,8 @@ static void processPendingMessages(struct win32state *state, struct gameControll
 						processKeyboardMessage(&keyboardController->fps, isDown);
 					else if (VKCode == 'H')
 						processKeyboardMessage(&keyboardController->hud, isDown);
+					else if (VKCode == 'R')
+						processKeyboardMessage(&keyboardController->reset, isDown);
 					else if (VKCode == VK_UP)
 						processKeyboardMessage(&keyboardController->actionUp, isDown);
 					else if (VKCode == VK_DOWN)
@@ -935,7 +937,6 @@ static void processPendingMessages(struct win32state *state, struct gameControll
 						processKeyboardMessage(&keyboardController->back, isDown);
 					else if (VKCode == VK_ESCAPE)
 					{
-						outs("ESC");
 						running = false;
 						processKeyboardMessage(&keyboardController->start, isDown);
 					}
@@ -949,8 +950,7 @@ static void processPendingMessages(struct win32state *state, struct gameControll
 				bool altKeyWasDown = (msg.lParam & (1 << 29));
 				if ((VKCode == VK_F4) && altKeyWasDown)
 				{
-					outs("ALT F4");
-					// OutputDebugStringA("ALT F4\n");
+					//OutputDebugStringA("ALT F4\n");
 					running = false;
 				}
 			}
