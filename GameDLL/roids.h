@@ -10,8 +10,12 @@
 #define WINDOW_WIDTH 1030
 #define WINDOW_HEIGHT 600
 
-#define COL_WIDTH 4
-#define ROW_HEIGHT 4
+#define SHIP_SCALE 1.2f
+#define TURN_SPEED 3.0f
+#define MOVE_SPEED 20.0f
+#define SLOW_SPEED 1.0f
+#define COL_WIDTH 3
+#define ROW_HEIGHT 3
 #define MAX_COLS (WINDOW_WIDTH / COL_WIDTH)
 #define MAX_ROWS (WINDOW_HEIGHT / ROW_HEIGHT)
 #define MAX_VERTS 20

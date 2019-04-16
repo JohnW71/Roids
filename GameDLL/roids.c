@@ -182,66 +182,66 @@ static void blob(struct gameDisplayBuffer *buffer, int col, int row, uint32_t co
 	}
 }
 
-static void drawDebugLines(struct gameDisplayBuffer *buffer)
-{
-	// draw red line all of row 0
-	uint32_t *dot = (uint32_t *)buffer->memory;
-	for (int i = 0; i < WINDOW_WIDTH; ++i)
-		*dot++ = RED;
-
-	// draw 5 rows of columns with gaps
-	int rows = 5;
-	int cols = 103;
-	for (int j = 0; j < rows; ++j)
-	{
-		int col_width = 5;
-		int gap = 5;
-
-		for (int i = 0; i < cols; ++i)
-		{
-			for (int k = 0; k < col_width; ++k)
-				*dot++ = WHITE;
-			for (int l = 0; l < gap; ++l)
-				dot++;
-		}
-		dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
-	}
-
-	// blue line all width
-	for (int i = 0; i < WINDOW_WIDTH; ++i)
-		*dot++ = BLUE;
-
-	// draw 5 rows of columns with gaps
-	for (int j = 0; j < rows; ++j)
-	{
-		int col_width = 5;
-		int gap = 5;
-
-		for (int i = 0; i < cols; ++i)
-		{
-			for (int k = 0; k < col_width; ++k)
-				*dot++ = WHITE;
-			for (int l = 0; l < gap; ++l)
-				dot++;
-		}
-		dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
-	}
-
-	// yellow line all width
-	for (int i = 0; i < WINDOW_WIDTH; ++i)
-		*dot++ = YELLOW;
-
-	// draw full diagonal line, single pixel
-	uint8_t *row = (uint8_t *)buffer->memory;
-	for (int y = 0; y < WINDOW_HEIGHT; ++y)
-	{
-		float col = (y / 600.0f) * WINDOW_WIDTH;
-		uint32_t *pixel = (uint32_t *)row;
-		pixel += ((uint32_t)col);
-		*pixel++ = GREEN;
-		row += buffer->pitch;
-	}
-}
+//static void drawDebugLines(struct gameDisplayBuffer *buffer)
+//{
+//	// draw red line all of row 0
+//	uint32_t *dot = (uint32_t *)buffer->memory;
+//	for (int i = 0; i < WINDOW_WIDTH; ++i)
+//		*dot++ = RED;
+//
+//	// draw 5 rows of columns with gaps
+//	int rows = 5;
+//	int cols = 103;
+//	for (int j = 0; j < rows; ++j)
+//	{
+//		int col_width = 5;
+//		int gap = 5;
+//
+//		for (int i = 0; i < cols; ++i)
+//		{
+//			for (int k = 0; k < col_width; ++k)
+//				*dot++ = WHITE;
+//			for (int l = 0; l < gap; ++l)
+//				dot++;
+//		}
+//		dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
+//	}
+//
+//	// blue line all width
+//	for (int i = 0; i < WINDOW_WIDTH; ++i)
+//		*dot++ = BLUE;
+//
+//	// draw 5 rows of columns with gaps
+//	for (int j = 0; j < rows; ++j)
+//	{
+//		int col_width = 5;
+//		int gap = 5;
+//
+//		for (int i = 0; i < cols; ++i)
+//		{
+//			for (int k = 0; k < col_width; ++k)
+//				*dot++ = WHITE;
+//			for (int l = 0; l < gap; ++l)
+//				dot++;
+//		}
+//		dot += (WINDOW_WIDTH - (cols * (gap + col_width)));
+//	}
+//
+//	// yellow line all width
+//	for (int i = 0; i < WINDOW_WIDTH; ++i)
+//		*dot++ = YELLOW;
+//
+//	// draw full diagonal line, single pixel
+//	uint8_t *row = (uint8_t *)buffer->memory;
+//	for (int y = 0; y < WINDOW_HEIGHT; ++y)
+//	{
+//		float col = (y / 600.0f) * WINDOW_WIDTH;
+//		uint32_t *pixel = (uint32_t *)row;
+//		pixel += ((uint32_t)col);
+//		*pixel++ = GREEN;
+//		row += buffer->pitch;
+//	}
+//}
 
 static void drawDigits(struct gameDisplayBuffer *buffer, short col, short row, float v, uint32_t colour)
 {
@@ -347,7 +347,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	struct gameState *state = (struct gameState *)memory->permanentStorage;
 	if (!memory->isInitialized)
 	{
-		//state->toneHz = 512; //1000
+		//state->toneHz = 512;
 		//state->tSine = 0.0f;
 		state->score = 999;
 		state->lives = 3;
@@ -362,50 +362,22 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		struct gameControllerInput *controller = getController(input, controllerIndex);
 		if (controller->isAnalog)
 		{
-			// analog movement
 			//ship.position.rotation += (int)(4.0f * controller->stickAverageX);
 		}
 		else
 		{
-			// digital movement
-			float turnSpeed = 2.0f;
-			float moveSpeed = 20.0f;
-
 			// update ship direction
 			if (controller->moveLeft.endedDown)
-				ship.position.angle -= turnSpeed * input->dtForFrame;
+				ship.position.angle -= TURN_SPEED * input->dtForFrame;
 			if (controller->moveRight.endedDown)
-				ship.position.angle += turnSpeed * input->dtForFrame;
+				ship.position.angle += TURN_SPEED * input->dtForFrame;
 
 			if (controller->actionUp.endedDown)
 			{
-				//ship.position.coords[0].y -= moveSpeed * input->dtForFrame;
-				//ship.position.coords[1].y -= moveSpeed * input->dtForFrame;
-				//ship.position.coords[2].y -= moveSpeed * input->dtForFrame;
-
 				// acceleration changes velocity over time
-				ship.position.dx += sinf(ship.position.angle) * moveSpeed * input->dtForFrame;
-				ship.position.dy += -cosf(ship.position.angle) * moveSpeed * input->dtForFrame;
+				ship.position.dx += sinf(ship.position.angle) * MOVE_SPEED * input->dtForFrame;
+				ship.position.dy += -cosf(ship.position.angle) * MOVE_SPEED * input->dtForFrame;
 			}
-			//TODO get wrapping working then remove these
-			//if (controller->actionDown.endedDown)
-			//{
-			//	ship.position.coords[0].y += moveSpeed * input->dtForFrame;
-			//	ship.position.coords[1].y += moveSpeed * input->dtForFrame;
-			//	ship.position.coords[2].y += moveSpeed * input->dtForFrame;
-			//}
-			//if (controller->actionLeft.endedDown)
-			//{
-			//	ship.position.coords[0].x -= moveSpeed * input->dtForFrame;
-			//	ship.position.coords[1].x -= moveSpeed * input->dtForFrame;
-			//	ship.position.coords[2].x -= moveSpeed * input->dtForFrame;
-			//}
-			//if (controller->actionRight.endedDown)
-			//{
-			//	ship.position.coords[0].x += moveSpeed * input->dtForFrame;
-			//	ship.position.coords[1].x += moveSpeed * input->dtForFrame;
-			//	ship.position.coords[2].x += moveSpeed * input->dtForFrame;
-			//}
 			if (controller->back.endedDown)
 			{
 				shipReset();
@@ -462,7 +434,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		ship.position.y -= MAX_ROWS;
 
 	// draw models
-	drawFrame(buffer, state, &ship.position, ship.verts, 1.2f, WHITE);
+	drawFrame(buffer, state, &ship.position, ship.verts, SHIP_SCALE, WHITE);
 	//drawFrame(buffer, state, &asteroid.position, asteroid.verts, 3.0, WHITE);
 
 	// draw data info
@@ -471,8 +443,8 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
 	if (state->fps)
 	{
-		//FPS
-		drawDigits(buffer, 230, 1, FPS, BLUE);
+		//fps
+		drawDigits(buffer, MAX_COLS - 15, 1, FPS, BLUE);
 	}
 
 	if (state->hud)
@@ -506,17 +478,15 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	}
 
 	// slow down gradually, temporary?
-	float slowdown = 1.0f;
-
 	if (ship.position.dx > 0.0f)
-		ship.position.dx -= slowdown * input->dtForFrame;
+		ship.position.dx -= SLOW_SPEED * input->dtForFrame;
 	else
-		ship.position.dx += slowdown * input->dtForFrame;
+		ship.position.dx += SLOW_SPEED * input->dtForFrame;
 
 	if (ship.position.dy > 0.0f)
-		ship.position.dy -= slowdown * input->dtForFrame;
+		ship.position.dy -= SLOW_SPEED * input->dtForFrame;
 	else
-		ship.position.dy += slowdown * input->dtForFrame;
+		ship.position.dy += SLOW_SPEED * input->dtForFrame;
 }
 
 // draw all vertices to form a frame

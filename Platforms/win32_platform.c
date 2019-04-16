@@ -100,27 +100,27 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		return 0;
 	}
 
-	//HWND hwnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW,
-	//							wc.lpszClassName,
-	//							"Roids",
-	//							WS_BORDER | WS_CAPTION | WS_VISIBLE, // WS_EX_TOPMOST
-	//							CW_USEDEFAULT, CW_USEDEFAULT,
-	//							WINDOW_WIDTH, WINDOW_HEIGHT,
-	//							NULL, NULL,	hInstance, NULL);
-	HWND hwnd =
-		CreateWindowExA(
-			0, // WS_EX_TOPMOST|WS_EX_LAYERED,
-			wc.lpszClassName,
-			"Handmade Hero",
-			WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-			CW_USEDEFAULT,
-			CW_USEDEFAULT,
-			CW_USEDEFAULT,
-			CW_USEDEFAULT,
-			0,
-			0,
-			hInstance,
-			0);
+	HWND hwnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW,
+								wc.lpszClassName,
+								"Roids",
+								WS_BORDER | WS_CAPTION | WS_VISIBLE, // WS_EX_TOPMOST
+								CW_USEDEFAULT, CW_USEDEFAULT,
+								WINDOW_WIDTH+20, WINDOW_HEIGHT+40,
+								NULL, NULL,	hInstance, NULL);
+	//HWND hwnd =
+	//	CreateWindowExA(
+	//		0, // WS_EX_TOPMOST|WS_EX_LAYERED,
+	//		wc.lpszClassName,
+	//		"Handmade Hero",
+	//		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+	//		CW_USEDEFAULT,
+	//		CW_USEDEFAULT,
+	//		CW_USEDEFAULT,
+	//		CW_USEDEFAULT,
+	//		0,
+	//		0,
+	//		hInstance,
+	//		0);
 
 	if (!hwnd)
 	{
