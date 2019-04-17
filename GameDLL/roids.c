@@ -37,12 +37,12 @@ static void shipReset(void)
 	ship.position.y = 0;
 	ship.position.dx = 0;
 	ship.position.dy = 0;
-	ship.position.coords[0].x = 0.0f;
-	ship.position.coords[0].y = -4.0f;
-	ship.position.coords[1].x = -4.0f;
-	ship.position.coords[1].y = 4.0f;
-	ship.position.coords[2].x = 4.0f;
-	ship.position.coords[2].y = 4.0f;
+	ship.position.vectors[0].x = 0.0f;
+	ship.position.vectors[0].y = -4.0f;
+	ship.position.vectors[1].x = -4.0f;
+	ship.position.vectors[1].y = 4.0f;
+	ship.position.vectors[2].x = 4.0f;
+	ship.position.vectors[2].y = 4.0f;
 }
 
 static void bulletsReset(void)
@@ -55,10 +55,10 @@ static void bulletReset(int i)
 {
 	bullets[i].alive = false;
 	bullets[i].position.angle = 0;
-	//bullets[i].position.coords->x = 0;
-	//bullets[i].position.coords->y = 0;
 	bullets[i].position.x = 0;
 	bullets[i].position.y = 0;
+	bullets[i].position.dx = 0;
+	bullets[i].position.dy = 0;
 }
 
 // draw coloured line from start point to end point
@@ -384,9 +384,9 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		else
 		{
 			// update ship direction
-			if (controller->moveLeft.endedDown)
+			if (controller->moveLeft.endedDown || controller->actionLeft.endedDown)
 				ship.position.angle -= TURN_SPEED * input->dtForFrame;
-			if (controller->moveRight.endedDown)
+			if (controller->moveRight.endedDown || controller->actionRight.endedDown)
 				ship.position.angle += TURN_SPEED * input->dtForFrame;
 
 			// thrust
@@ -401,6 +401,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 			if (controller->reset.endedDown)
 			{
 				shipReset();
+				bulletsReset();
 				controller->reset.endedDown = false;
 			}
 
@@ -413,10 +414,9 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 					{
 						bullets[i].alive = true;
 						bullets[i].position.angle = ship.position.angle;
-						//bullets[i].position.coords->x = ship.position.coords->x;
-						//bullets[i].position.coords->y = ship.position.coords->y;
-						bullets[i].position.x = ship.position.x;
-						bullets[i].position.y = ship.position.y;
+						bullets[i].position.dx = ship.position.x;
+						bullets[i].position.dy = ship.position.y;
+						break;
 					}
 				}
 
@@ -462,22 +462,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	// velocity changes position over time
 	ship.position.x += ship.position.dx * input->dtForFrame;
 	ship.position.y += ship.position.dy * input->dtForFrame;
-	for (int i = 0; i < MAX_BULLETS; ++i)
-		if (bullets[i].alive)
-		{
-			bullets[i].position.x += BULLET_SPEED * input->dtForFrame;
-			bullets[i].position.y += BULLET_SPEED * input->dtForFrame;
-
-			// if gone off screen remove it
-			if (bullets[i].position.x < 0.0f ||
-				bullets[i].position.x >(MAX_COLS / 2) ||
-				bullets[i].position.y < 0.0f ||
-				bullets[i].position.y >(MAX_ROWS / 2))
-			{
-				bulletReset(i);
-			}
-		}
-
+	
 	// re-wrap co-ordinates to prevent ever larger positions
 	if (ship.position.x < 0.0f)
 		ship.position.x += MAX_COLS;
@@ -491,12 +476,27 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	if (ship.position.y > (MAX_ROWS / 2))
 		ship.position.y -= MAX_ROWS;
 
+	// update bullets
+	for (int i = 0; i < MAX_BULLETS; ++i)
+		if (bullets[i].alive)
+		{
+			bullets[i].position.dx += sinf(bullets[i].position.angle) * BULLET_SPEED * input->dtForFrame;
+			bullets[i].position.dy += -cosf(bullets[i].position.angle) * BULLET_SPEED * input->dtForFrame;
+
+			// if off screen remove it
+			if (offsetCol((int)bullets[i].position.dx) < 0 || offsetCol((int)bullets[i].position.dx) > MAX_COLS ||
+				offsetRow((int)bullets[i].position.dy) < 0 || offsetRow((int)bullets[i].position.dy) > MAX_ROWS)
+				bulletReset(i);
+		}
+
 	// draw models
 	drawFrame(buffer, state, &ship.position, ship.verts, SHIP_SCALE, WHITE);
 	//drawFrame(buffer, state, &asteroid.position, asteroid.verts, 3.0, WHITE);
+
+	// draw bullets
 	for (int i = 0; i < MAX_BULLETS; ++i)
 		if (bullets[i].alive)
-			blob(buffer, offsetCol((int)bullets[i].position.x), offsetRow((int)bullets[i].position.x), WHITE);
+			blob(buffer, offsetCol((int)bullets[i].position.dx), offsetRow((int)bullets[i].position.dy), WHITE);
 
 	// draw data info
 	drawDigits(buffer, 1, 1, state->score, WHITE);
@@ -521,33 +521,50 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		drawDigits(buffer, 1, 28, ship.position.dx, ORANGE);
 		drawDigits(buffer, 15, 28, ship.position.dy, ORANGE);
 
-		// size
-		drawDigits(buffer, 1, 34, MAX_COLS, ORANGE);
-		drawDigits(buffer, 15, 34, MAX_ROWS, ORANGE);
+		// grid size
+		drawDigits(buffer, 1, 34, MAX_COLS, BLUE);
+		drawDigits(buffer, 15, 34, MAX_ROWS, BLUE);
 
 		// vec1
-		drawDigits(buffer, 1, 41, ship.position.coords[0].x, YELLOW);
-		drawDigits(buffer, 15, 41, ship.position.coords[0].y, YELLOW);
+		drawDigits(buffer, 1, 41, ship.position.vectors[0].x, YELLOW);
+		drawDigits(buffer, 15, 41, ship.position.vectors[0].y, YELLOW);
 
 		// vec2
-		drawDigits(buffer, 35, 41, ship.position.coords[1].x, YELLOW);
-		drawDigits(buffer, 49, 41, ship.position.coords[1].y, YELLOW);
+		drawDigits(buffer, 35, 41, ship.position.vectors[1].x, YELLOW);
+		drawDigits(buffer, 49, 41, ship.position.vectors[1].y, YELLOW);
 
 		// vec3
-		drawDigits(buffer, 70, 41, ship.position.coords[2].x, YELLOW);
-		drawDigits(buffer, 84, 41, ship.position.coords[2].y, YELLOW);
+		drawDigits(buffer, 70, 41, ship.position.vectors[2].x, YELLOW);
+		drawDigits(buffer, 84, 41, ship.position.vectors[2].y, YELLOW);
+
+		// bullet count
+		int bulletCount = 0;
+		for (int i = 0; i < MAX_BULLETS; ++i)
+			if (bullets[i].alive)
+				++bulletCount;
+		drawDigits(buffer, 1, 68, (float)bulletCount, RED);
+
+		// bullets
+		int rows = 75;
+		for (int i = 0; i < MAX_BULLETS; ++i)
+			if (bullets[i].alive)
+			{
+				drawDigits(buffer, 1, rows, bullets[i].position.dx, RED);
+				drawDigits(buffer, 15, rows, bullets[i].position.dy, RED);
+				rows += 6;
+			}
 	}
 
 	// slow down gradually, temporary?
-	if (ship.position.dx > 0.0f)
-		ship.position.dx -= SLOW_SPEED * input->dtForFrame;
-	else
-		ship.position.dx += SLOW_SPEED * input->dtForFrame;
+	//if (ship.position.dx > 0.0f)
+	//	ship.position.dx -= SLOW_SPEED * input->dtForFrame;
+	//else
+	//	ship.position.dx += SLOW_SPEED * input->dtForFrame;
 
-	if (ship.position.dy > 0.0f)
-		ship.position.dy -= SLOW_SPEED * input->dtForFrame;
-	else
-		ship.position.dy += SLOW_SPEED * input->dtForFrame;
+	//if (ship.position.dy > 0.0f)
+	//	ship.position.dy -= SLOW_SPEED * input->dtForFrame;
+	//else
+	//	ship.position.dy += SLOW_SPEED * input->dtForFrame;
 }
 
 // draw all vertices to form a frame
@@ -555,63 +572,63 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 {
 	assert(verts <= MAX_VERTS);
 
-	float new_coords[MAX_VERTS][2];
+	float new_vectors[MAX_VERTS][2];
 
 	// update rotation
 	float r = position->angle;
 	for (int i = 0; i < verts; ++i)
 	{
-		float x = position->coords[i].x;
-		float y = position->coords[i].y;
-		new_coords[i][0] = x * cosf(r) - y * sinf(r);
-		new_coords[i][1] = x * sinf(r) + y * cosf(r);
+		float x = position->vectors[i].x;
+		float y = position->vectors[i].y;
+		new_vectors[i][0] = x * cosf(r) - y * sinf(r);
+		new_vectors[i][1] = x * sinf(r) + y * cosf(r);
 	}
 
-	// rotated coords
+	// rotated vectors
 	if (state->hud)
 	{
-		drawDigits(buffer, 1, 48, new_coords[0][0], GREEN);
-		drawDigits(buffer, 15, 48, new_coords[0][1], GREEN);
-		drawDigits(buffer, 35, 48, new_coords[1][0], GREEN);
-		drawDigits(buffer, 49, 48, new_coords[1][1], GREEN);
-		drawDigits(buffer, 70, 48, new_coords[2][0], GREEN);
-		drawDigits(buffer, 84, 48, new_coords[2][1], GREEN);
+		drawDigits(buffer, 1, 48, new_vectors[0][0], GREEN);
+		drawDigits(buffer, 15, 48, new_vectors[0][1], GREEN);
+		drawDigits(buffer, 35, 48, new_vectors[1][0], GREEN);
+		drawDigits(buffer, 49, 48, new_vectors[1][1], GREEN);
+		drawDigits(buffer, 70, 48, new_vectors[2][0], GREEN);
+		drawDigits(buffer, 84, 48, new_vectors[2][1], GREEN);
 	}
 
 	// update scale
 	for (int i = 0; i < verts; ++i)
 	{
-		new_coords[i][0] = roundf(new_coords[i][0] * scale);
-		new_coords[i][1] = roundf(new_coords[i][1] * scale);
+		new_vectors[i][0] = roundf(new_vectors[i][0] * scale);
+		new_vectors[i][1] = roundf(new_vectors[i][1] * scale);
 	}
 
-	// scaled coords
+	// scaled vectors
 	if (state->hud)
 	{
-		drawDigits(buffer, 1, 54, new_coords[0][0], CYAN);
-		drawDigits(buffer, 15, 54, new_coords[0][1], CYAN);
-		drawDigits(buffer, 35, 54, new_coords[1][0], CYAN);
-		drawDigits(buffer, 49, 54, new_coords[1][1], CYAN);
-		drawDigits(buffer, 70, 54, new_coords[2][0], CYAN);
-		drawDigits(buffer, 84, 54, new_coords[2][1], CYAN);
+		drawDigits(buffer, 1, 54, new_vectors[0][0], CYAN);
+		drawDigits(buffer, 15, 54, new_vectors[0][1], CYAN);
+		drawDigits(buffer, 35, 54, new_vectors[1][0], CYAN);
+		drawDigits(buffer, 49, 54, new_vectors[1][1], CYAN);
+		drawDigits(buffer, 70, 54, new_vectors[2][0], CYAN);
+		drawDigits(buffer, 84, 54, new_vectors[2][1], CYAN);
 	}
 
 	// translate co-ordinates
 	for (int i = 0; i < verts; ++i)
 	{
-		new_coords[i][0] += roundf(position->x);
-		new_coords[i][1] += roundf(position->y);
+		new_vectors[i][0] += roundf(position->x);
+		new_vectors[i][1] += roundf(position->y);
 	}
 
-	// translated coords
+	// translated vectors
 	if (state->hud)
 	{
-		drawDigits(buffer, 1, 60, new_coords[0][0], ORANGE);
-		drawDigits(buffer, 15, 60, new_coords[0][1], ORANGE);
-		drawDigits(buffer, 35, 60, new_coords[1][0], ORANGE);
-		drawDigits(buffer, 49, 60, new_coords[1][1], ORANGE);
-		drawDigits(buffer, 70, 60, new_coords[2][0], ORANGE);
-		drawDigits(buffer, 84, 60, new_coords[2][1], ORANGE);
+		drawDigits(buffer, 1, 60, new_vectors[0][0], ORANGE);
+		drawDigits(buffer, 15, 60, new_vectors[0][1], ORANGE);
+		drawDigits(buffer, 35, 60, new_vectors[1][0], ORANGE);
+		drawDigits(buffer, 49, 60, new_vectors[1][1], ORANGE);
+		drawDigits(buffer, 70, 60, new_vectors[2][0], ORANGE);
+		drawDigits(buffer, 84, 60, new_vectors[2][1], ORANGE);
 	}
 
 	uint32_t original = colour;
@@ -626,14 +643,14 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 			colour = original;
 
 		line(buffer,
-			(int)new_coords[i][0], (int)new_coords[i][1],
-			(int)new_coords[i + 1][0], (int)new_coords[i + 1][1],
+			(int)new_vectors[i][0], (int)new_vectors[i][1],
+			(int)new_vectors[i + 1][0], (int)new_vectors[i + 1][1],
 			colour);
 	}
 
 	// draw last vertex line
 	line(buffer,
-		(int)new_coords[verts][0], (int)new_coords[verts][1],
-		(int)new_coords[0][0], (int)new_coords[0][1],
+		(int)new_vectors[verts][0], (int)new_vectors[verts][1],
+		(int)new_vectors[0][0], (int)new_vectors[0][1],
 		WHITE);
 }

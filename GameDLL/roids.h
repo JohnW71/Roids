@@ -14,7 +14,7 @@
 #define TURN_SPEED 3.0f
 #define MOVE_SPEED 20.0f
 #define SLOW_SPEED 1.0f
-#define BULLET_SPEED 20.0f
+#define BULLET_SPEED 40.0f
 #define COL_WIDTH 3
 #define ROW_HEIGHT 3
 #define MAX_COLS (WINDOW_WIDTH / COL_WIDTH)
@@ -161,7 +161,7 @@ struct gameControllerInput *getController(struct gameInput *input, unsigned int 
 	return result;
 }
 
-struct Coords
+struct Vector
 {
 	float x;
 	float y;
@@ -174,7 +174,7 @@ struct Position
 	float x;
 	float y;
 	float angle;
-	struct Coords coords[MAX_VERTS];
+	struct Vector vectors[MAX_VERTS];
 };
 
 struct Ship
