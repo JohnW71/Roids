@@ -15,14 +15,16 @@
 #define MOVE_SPEED 20.0f
 #define SLOW_SPEED 1.0f
 #define BULLET_SPEED 40.0f
+#define ASTEROID_SPEED 20.0f
 #define COL_WIDTH 3
 #define ROW_HEIGHT 3
 #define MAX_COLS (WINDOW_WIDTH / COL_WIDTH)
 #define MAX_ROWS (WINDOW_HEIGHT / ROW_HEIGHT)
 #define MAX_VERTS 20
 #define MAX_BULLETS 10
+#define MAX_ASTEROIDS 42
 
-#define Pi32 3.14159265359f
+//#define Pi32 3.14159265359f
 #define assert(expression) if(!(expression)) {*(int *)0 = 0;}
 #define arrayCount(array) (sizeof(array) / sizeof((array)[0]))
 
@@ -52,10 +54,13 @@ typedef GAME_GET_SOUND_SAMPLES(game_GetSoundSamples);
 
 int offsetCol(int);
 int offsetRow(int);
+short countAsteroids(void);
 void outputSound(struct gameState *, struct gameSoundOutputBuffer *, int);
 void shipReset(void);
 void bulletReset(int);
 void bulletsReset(void);
+void asteroidReset(int);
+void asteroidsReset(void);
 void line(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
 void lineLow(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
 void lineHigh(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
@@ -90,6 +95,7 @@ struct gameState
 {
 	short lives;
 	short score;
+	short asteroids;
 	bool hud;
 	bool fps;
 };
@@ -185,10 +191,11 @@ struct Ship
 
 struct Asteroid
 {
+	bool alive;
 	short size;
 	short verts;
 	struct Position position;
-} asteroid;
+} asteroids[MAX_ASTEROIDS];
 
 struct Bullet
 {

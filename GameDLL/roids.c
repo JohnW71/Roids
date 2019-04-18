@@ -61,6 +61,38 @@ static void bulletReset(int i)
 	bullets[i].position.dy = 0;
 }
 
+static void asteroidsReset(void)
+{
+	for (int i = 0; i < MAX_ASTEROIDS; ++i)
+		asteroidReset(i);
+}
+
+static void asteroidReset(int i)
+{
+	asteroids[i].alive = false;
+	asteroids[i].verts = 3;
+	asteroids[i].position.angle = 0.0f;
+	asteroids[i].position.x = 0;
+	asteroids[i].position.y = 0;
+	asteroids[i].position.dx = 0;
+	asteroids[i].position.dy = 0;
+
+	for (int v = 0; v < MAX_VERTS; ++v)
+	{
+		asteroids[i].position.vectors[v].x = 0.0f;
+		asteroids[i].position.vectors[v].y = 0.0f;
+	}
+}
+
+static short countAsteroids()
+{
+	short c = 0;
+	for (int i = 0; i < MAX_ASTEROIDS; ++i)
+		if (asteroids[i].alive)
+			++c;
+	return c;
+}
+
 // draw coloured line from start point to end point
 static void line(struct gameDisplayBuffer *buffer, int startCol, int startRow, int endCol, int endRow, uint32_t colour)
 {
@@ -365,13 +397,15 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	{
 		//state->toneHz = 512;
 		//state->tSine = 0.0f;
-		state->score = 999;
+		state->score = 0;
 		state->lives = 3;
+		state->asteroids = 2;
 		state->hud = true;
 		state->fps = true;
 		memory->isInitialized = true;
 		shipReset();
 		bulletsReset();
+		asteroidsReset();
 	}
 
 	for (int controllerIndex = 0; controllerIndex < arrayCount(input->controllers); ++controllerIndex)
@@ -402,6 +436,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 			{
 				shipReset();
 				bulletsReset();
+				asteroidsReset();
 				controller->reset.endedDown = false;
 			}
 
@@ -453,11 +488,16 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
 	//drawDebugLines(buffer);
 
-	//if (state->lives == 0)
-	//{
-	//	state->score = 0;
-	//	shipReset();
-	//}
+	// game over
+	if (state->lives == 0)
+	{
+		state->score = 0;
+		state->lives = 3;
+		state->asteroids = 2;
+		shipReset();
+		bulletsReset();
+		asteroidsReset();
+	}
 
 	// velocity changes position over time
 	ship.position.x += ship.position.dx * input->dtForFrame;
@@ -489,9 +529,30 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 				bulletReset(i);
 		}
 
-	// draw models
+	// create asteroids
+	if (countAsteroids() == 0)
+	{
+		for (int i = 0; i < state->asteroids; ++i)
+		{
+			//TODO create asteroids
+		}
+	}
+
+	// update asteroids
+	for (int i = 0; i < MAX_ASTEROIDS; ++i)
+		if (asteroids[i].alive)
+		{
+			asteroids[i].position.x += asteroids[i].position.dx * input->dtForFrame;
+			asteroids[i].position.y += asteroids[i].position.dy * input->dtForFrame;
+		}
+
+	// draw ship
 	drawFrame(buffer, state, &ship.position, ship.verts, SHIP_SCALE, WHITE);
-	//drawFrame(buffer, state, &asteroid.position, asteroid.verts, 3.0, WHITE);
+
+	// draw asteroids
+	for (int i = 0; i < MAX_ASTEROIDS; ++i)
+		if (asteroids[i].alive)
+			drawFrame(buffer, state, &asteroids[i].position, asteroids[i].verts, 1.0f, WHITE);
 
 	// draw bullets
 	for (int i = 0; i < MAX_BULLETS; ++i)
@@ -585,15 +646,15 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	}
 
 	// rotated vectors
-	if (state->hud)
-	{
-		drawDigits(buffer, 1, 48, new_vectors[0][0], GREEN);
-		drawDigits(buffer, 15, 48, new_vectors[0][1], GREEN);
-		drawDigits(buffer, 35, 48, new_vectors[1][0], GREEN);
-		drawDigits(buffer, 49, 48, new_vectors[1][1], GREEN);
-		drawDigits(buffer, 70, 48, new_vectors[2][0], GREEN);
-		drawDigits(buffer, 84, 48, new_vectors[2][1], GREEN);
-	}
+	//if (state->hud)
+	//{
+	//	drawDigits(buffer, 1, 48, new_vectors[0][0], GREEN);
+	//	drawDigits(buffer, 15, 48, new_vectors[0][1], GREEN);
+	//	drawDigits(buffer, 35, 48, new_vectors[1][0], GREEN);
+	//	drawDigits(buffer, 49, 48, new_vectors[1][1], GREEN);
+	//	drawDigits(buffer, 70, 48, new_vectors[2][0], GREEN);
+	//	drawDigits(buffer, 84, 48, new_vectors[2][1], GREEN);
+	//}
 
 	// update scale
 	for (int i = 0; i < verts; ++i)
@@ -603,15 +664,15 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	}
 
 	// scaled vectors
-	if (state->hud)
-	{
-		drawDigits(buffer, 1, 54, new_vectors[0][0], CYAN);
-		drawDigits(buffer, 15, 54, new_vectors[0][1], CYAN);
-		drawDigits(buffer, 35, 54, new_vectors[1][0], CYAN);
-		drawDigits(buffer, 49, 54, new_vectors[1][1], CYAN);
-		drawDigits(buffer, 70, 54, new_vectors[2][0], CYAN);
-		drawDigits(buffer, 84, 54, new_vectors[2][1], CYAN);
-	}
+	//if (state->hud)
+	//{
+	//	drawDigits(buffer, 1, 54, new_vectors[0][0], CYAN);
+	//	drawDigits(buffer, 15, 54, new_vectors[0][1], CYAN);
+	//	drawDigits(buffer, 35, 54, new_vectors[1][0], CYAN);
+	//	drawDigits(buffer, 49, 54, new_vectors[1][1], CYAN);
+	//	drawDigits(buffer, 70, 54, new_vectors[2][0], CYAN);
+	//	drawDigits(buffer, 84, 54, new_vectors[2][1], CYAN);
+	//}
 
 	// translate co-ordinates
 	for (int i = 0; i < verts; ++i)
@@ -621,15 +682,15 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	}
 
 	// translated vectors
-	if (state->hud)
-	{
-		drawDigits(buffer, 1, 60, new_vectors[0][0], ORANGE);
-		drawDigits(buffer, 15, 60, new_vectors[0][1], ORANGE);
-		drawDigits(buffer, 35, 60, new_vectors[1][0], ORANGE);
-		drawDigits(buffer, 49, 60, new_vectors[1][1], ORANGE);
-		drawDigits(buffer, 70, 60, new_vectors[2][0], ORANGE);
-		drawDigits(buffer, 84, 60, new_vectors[2][1], ORANGE);
-	}
+	//if (state->hud)
+	//{
+	//	drawDigits(buffer, 1, 60, new_vectors[0][0], ORANGE);
+	//	drawDigits(buffer, 15, 60, new_vectors[0][1], ORANGE);
+	//	drawDigits(buffer, 35, 60, new_vectors[1][0], ORANGE);
+	//	drawDigits(buffer, 49, 60, new_vectors[1][1], ORANGE);
+	//	drawDigits(buffer, 70, 60, new_vectors[2][0], ORANGE);
+	//	drawDigits(buffer, 84, 60, new_vectors[2][1], ORANGE);
+	//}
 
 	uint32_t original = colour;
 
