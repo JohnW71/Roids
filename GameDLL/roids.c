@@ -29,6 +29,18 @@ GAME_GET_SOUND_SAMPLES(gameGetSoundSamples)
 	outputSound(state, soundBuffer, 400);
 }
 
+static void gameReset(struct gameState *state)
+{
+	state->score = 0;
+	state->lives = 3;
+	state->asteroids = 2;
+	state->hud = true;
+	state->fps = true;
+	shipReset();
+	bulletsReset();
+	asteroidsReset();
+}
+
 static void shipReset(void)
 {
 	ship.verts = 3;
@@ -55,8 +67,6 @@ static void bulletReset(int i)
 {
 	bullets[i].alive = false;
 	bullets[i].position.angle = 0;
-	bullets[i].position.x = 0;
-	bullets[i].position.y = 0;
 	bullets[i].position.dx = 0;
 	bullets[i].position.dy = 0;
 }
@@ -70,7 +80,8 @@ static void asteroidsReset(void)
 static void asteroidReset(int i)
 {
 	asteroids[i].alive = false;
-	asteroids[i].verts = 3;
+	asteroids[i].size = 0.0f;
+	asteroids[i].verts = 0;
 	asteroids[i].position.angle = 0.0f;
 	asteroids[i].position.x = 0;
 	asteroids[i].position.y = 0;
@@ -395,17 +406,11 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	struct gameState *state = (struct gameState *)memory->permanentStorage;
 	if (!memory->isInitialized)
 	{
+		memory->isInitialized = true;
+		srand((unsigned int)time(NULL));
 		//state->toneHz = 512;
 		//state->tSine = 0.0f;
-		state->score = 0;
-		state->lives = 3;
-		state->asteroids = 2;
-		state->hud = true;
-		state->fps = true;
-		memory->isInitialized = true;
-		shipReset();
-		bulletsReset();
-		asteroidsReset();
+		gameReset(state);
 	}
 
 	for (int controllerIndex = 0; controllerIndex < arrayCount(input->controllers); ++controllerIndex)
@@ -434,9 +439,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 			// reset
 			if (controller->reset.endedDown)
 			{
-				shipReset();
-				bulletsReset();
-				asteroidsReset();
+				gameReset(state);
 				controller->reset.endedDown = false;
 			}
 
@@ -454,7 +457,6 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 						break;
 					}
 				}
-
 				controller->back.endedDown = false;
 			}
 
@@ -491,15 +493,10 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	// game over
 	if (state->lives == 0)
 	{
-		state->score = 0;
-		state->lives = 3;
-		state->asteroids = 2;
-		shipReset();
-		bulletsReset();
-		asteroidsReset();
+		gameReset(state);
 	}
 
-	// velocity changes position over time
+	// ship velocity changes position over time
 	ship.position.x += ship.position.dx * input->dtForFrame;
 	ship.position.y += ship.position.dy * input->dtForFrame;
 	
@@ -534,16 +531,47 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	{
 		for (int i = 0; i < state->asteroids; ++i)
 		{
-			//TODO create asteroids
+			asteroids[i].alive = true;
+			asteroids[i].size = ASTEROID_BIG;
+			asteroids[i].verts = ASTEROID_BIG_VERTS;
+			asteroids[i].position.angle = (float)(rand() % 360);
+			asteroids[i].position.x = (float)(rand() % MAX_COLS);
+			asteroids[i].position.y = (float)(rand() % MAX_ROWS);
+			asteroids[i].position.dx = sinf(asteroids[i].position.angle) * ASTEROID_SPEED * input->dtForFrame;
+			asteroids[i].position.dy = cosf(asteroids[i].position.angle) * ASTEROID_SPEED * input->dtForFrame;
+
+			for (int v = 0; v < asteroids[i].verts; ++v)
+			{
+				float vector = ((float)v / (float)asteroids[i].verts) * (2 * Pi32);
+				asteroids[i].position.vectors[v].x = (float)asteroids[i].size * sinf(vector);
+				asteroids[i].position.vectors[v].y = (float)asteroids[i].size * cosf(vector);
+			}
 		}
+
+		if (state->asteroids < MAX_NEW_ASTEROIDS)
+			++state->asteroids;
 	}
 
 	// update asteroids
 	for (int i = 0; i < MAX_ASTEROIDS; ++i)
 		if (asteroids[i].alive)
 		{
-			asteroids[i].position.x += asteroids[i].position.dx * input->dtForFrame;
-			asteroids[i].position.y += asteroids[i].position.dy * input->dtForFrame;
+			asteroids[i].position.angle += ASTEROID_ROTATION * input->dtForFrame;
+			asteroids[i].position.x += asteroids[i].position.dx;
+			asteroids[i].position.y += asteroids[i].position.dy;
+
+			// re-wrap co-ordinates to prevent ever larger positions
+			if (asteroids[i].position.x < 0.0f)
+				asteroids[i].position.x += MAX_COLS;
+
+			if (asteroids[i].position.x > (MAX_COLS / 2))
+				asteroids[i].position.x -= MAX_COLS;
+
+			if (asteroids[i].position.y < 0.0f)
+				asteroids[i].position.y += MAX_ROWS;
+
+			if (asteroids[i].position.y > (MAX_ROWS / 2))
+				asteroids[i].position.y -= MAX_ROWS;
 		}
 
 	// draw ship
@@ -552,7 +580,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	// draw asteroids
 	for (int i = 0; i < MAX_ASTEROIDS; ++i)
 		if (asteroids[i].alive)
-			drawFrame(buffer, state, &asteroids[i].position, asteroids[i].verts, 1.0f, WHITE);
+			drawFrame(buffer, state, &asteroids[i].position, asteroids[i].verts, ASTEROID_SCALE, WHITE);
 
 	// draw bullets
 	for (int i = 0; i < MAX_BULLETS; ++i)

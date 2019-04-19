@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>	// exit(), rand(), malloc()
+#include <time.h>	// time()
 
 //#define WINDOW_WIDTH 160
 //#define WINDOW_HEIGHT 100
@@ -11,11 +13,19 @@
 #define WINDOW_HEIGHT 600
 
 #define SHIP_SCALE 1.2f
-#define TURN_SPEED 3.0f
+#define TURN_SPEED 4.0f
 #define MOVE_SPEED 20.0f
 #define SLOW_SPEED 1.0f
 #define BULLET_SPEED 40.0f
+#define ASTEROID_SCALE 1.0f
 #define ASTEROID_SPEED 20.0f
+#define ASTEROID_ROTATION 1.0f
+#define ASTEROID_BIG_VERTS 20
+#define ASTEROID_MED_VERTS 12
+#define ASTEROID_SMALL_VERTS 6
+#define ASTEROID_BIG 30.0f
+#define ASTEROID_MED 15.0f
+#define ASTEROID_SMALL 0.0f
 #define COL_WIDTH 3
 #define ROW_HEIGHT 3
 #define MAX_COLS (WINDOW_WIDTH / COL_WIDTH)
@@ -23,8 +33,9 @@
 #define MAX_VERTS 20
 #define MAX_BULLETS 10
 #define MAX_ASTEROIDS 42
+#define MAX_NEW_ASTEROIDS 6
 
-//#define Pi32 3.14159265359f
+#define Pi32 3.14159265359f
 #define assert(expression) if(!(expression)) {*(int *)0 = 0;}
 #define arrayCount(array) (sizeof(array) / sizeof((array)[0]))
 
@@ -56,6 +67,7 @@ int offsetCol(int);
 int offsetRow(int);
 short countAsteroids(void);
 void outputSound(struct gameState *, struct gameSoundOutputBuffer *, int);
+void gameReset(struct gameState *);
 void shipReset(void);
 void bulletReset(int);
 void bulletsReset(void);
@@ -192,7 +204,7 @@ struct Ship
 struct Asteroid
 {
 	bool alive;
-	short size;
+	float size;
 	short verts;
 	struct Position position;
 } asteroids[MAX_ASTEROIDS];
