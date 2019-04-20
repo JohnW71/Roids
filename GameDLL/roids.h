@@ -66,7 +66,9 @@ typedef GAME_GET_SOUND_SAMPLES(game_GetSoundSamples);
 int offsetCol(int);
 int offsetRow(int);
 short countAsteroids(void);
+bool collisionDetected(float, float, float, float, float);
 void outputSound(struct gameState *, struct gameSoundOutputBuffer *, int);
+void gameReload(struct gameState *);
 void gameReset(struct gameState *);
 void shipReset(void);
 void bulletReset(int);
@@ -79,6 +81,7 @@ void lineHigh(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
 void blob(struct gameDisplayBuffer *, int, int, uint32_t);
 void drawFrame(struct gameDisplayBuffer *, struct gameState *, struct Position *, short, float, uint32_t);
 void wrapCoordinates(int, int, int *, int *);
+void wrapModel(struct Position *);
 void drawDigit(struct gameDisplayBuffer *, short, short, short, uint32_t);
 void drawDigits(struct gameDisplayBuffer *, short, short, float, uint32_t);
 

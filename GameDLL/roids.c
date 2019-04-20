@@ -29,6 +29,14 @@ GAME_GET_SOUND_SAMPLES(gameGetSoundSamples)
 	outputSound(state, soundBuffer, 400);
 }
 
+static void gameReload(struct gameState *state)
+{
+	--state->lives;
+	shipReset();
+	bulletsReset();
+	asteroidsReset();
+}
+
 static void gameReset(struct gameState *state)
 {
 	state->score = 0;
@@ -192,6 +200,8 @@ static void lineLow(struct gameDisplayBuffer *buffer, int startCol, int startRow
 static int offsetCol(int coord)
 {
 	int result = (MAX_COLS / 2) + coord;
+	//if (MAX_COLS % 2 != 0)
+	//	++result;
 	return result;
 }
 
@@ -199,6 +209,8 @@ static int offsetCol(int coord)
 static int offsetRow(int coord)
 {
 	int result = (MAX_ROWS / 2) + coord;
+	//if (MAX_ROWS % 2 != 0)
+	//	++result;
 	return result;
 }
 
@@ -216,6 +228,21 @@ static void wrapCoordinates(int xIn, int yIn, int *xOut, int *yOut)
 
 	if (yIn > MAX_ROWS)
 		*yOut = yIn - MAX_ROWS;
+}
+
+static void wrapModel(struct Position *position)
+{
+	if (position->x < 0.0f)
+		position->x += MAX_COLS;
+
+	if (position->x > (MAX_COLS / 2))
+		position->x -= MAX_COLS;
+
+	if (position->y < 0.0f)
+		position->y += MAX_ROWS;
+
+	if (position->y > (MAX_ROWS / 2))
+		position->y -= MAX_ROWS;
 }
 
 // draw coloured square at specified position
@@ -239,6 +266,11 @@ static void blob(struct gameDisplayBuffer *buffer, int col, int row, uint32_t co
 
 		pixel += (WINDOW_WIDTH - COL_WIDTH);
 	}
+}
+
+bool collisionDetected(float circleX, float circleY, float radius, float pointX, float pointY)
+{
+	return sqrt((pointX - circleX) * (pointX - circleX) + (pointY - circleY) * (pointY - circleY)) < radius;
 }
 
 //static void drawDebugLines(struct gameDisplayBuffer *buffer)
@@ -501,17 +533,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	ship.position.y += ship.position.dy * input->dtForFrame;
 	
 	// re-wrap co-ordinates to prevent ever larger positions
-	if (ship.position.x < 0.0f)
-		ship.position.x += MAX_COLS;
-
-	if (ship.position.x > (MAX_COLS / 2))
-		ship.position.x -= MAX_COLS;
-
-	if (ship.position.y < 0.0f)
-		ship.position.y += MAX_ROWS;
-
-	if (ship.position.y > (MAX_ROWS / 2))
-		ship.position.y -= MAX_ROWS;
+	wrapModel(&ship.position);
 
 	// update bullets
 	for (int i = 0; i < MAX_BULLETS; ++i)
@@ -542,9 +564,10 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
 			for (int v = 0; v < asteroids[i].verts; ++v)
 			{
+				int variance = rand() % 7;
 				float vector = ((float)v / (float)asteroids[i].verts) * (2 * Pi32);
-				asteroids[i].position.vectors[v].x = (float)asteroids[i].size * sinf(vector);
-				asteroids[i].position.vectors[v].y = (float)asteroids[i].size * cosf(vector);
+				asteroids[i].position.vectors[v].x = (float)asteroids[i].size * sinf(vector) + (float)variance;
+				asteroids[i].position.vectors[v].y = (float)asteroids[i].size * cosf(vector) + (float)variance;
 			}
 		}
 
@@ -556,22 +579,33 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	for (int i = 0; i < MAX_ASTEROIDS; ++i)
 		if (asteroids[i].alive)
 		{
+			if (collisionDetected(asteroids[i].position.x, asteroids[i].position.y, 
+				asteroids[i].size,
+				ship.position.x, ship.position.y))
+			{
+				gameReload(state);
+			}
+
+			for (int b = 0; b < MAX_BULLETS; ++b)
+				if (bullets[b].alive)
+					if (collisionDetected(asteroids[i].position.x, asteroids[i].position.y,
+						asteroids[i].size,
+						bullets[b].position.dx, bullets[b].position.dy))
+					{
+						asteroids[i].alive = false;
+						state->score += 10;
+						break;
+					}
+
+			if (!asteroids[i].alive)
+				continue;
+
 			asteroids[i].position.angle += ASTEROID_ROTATION * input->dtForFrame;
 			asteroids[i].position.x += asteroids[i].position.dx;
 			asteroids[i].position.y += asteroids[i].position.dy;
 
 			// re-wrap co-ordinates to prevent ever larger positions
-			if (asteroids[i].position.x < 0.0f)
-				asteroids[i].position.x += MAX_COLS;
-
-			if (asteroids[i].position.x > (MAX_COLS / 2))
-				asteroids[i].position.x -= MAX_COLS;
-
-			if (asteroids[i].position.y < 0.0f)
-				asteroids[i].position.y += MAX_ROWS;
-
-			if (asteroids[i].position.y > (MAX_ROWS / 2))
-				asteroids[i].position.y -= MAX_ROWS;
+			wrapModel(&asteroids[i].position);
 		}
 
 	// draw ship
