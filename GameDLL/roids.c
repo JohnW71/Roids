@@ -268,7 +268,7 @@ static void blob(struct gameDisplayBuffer *buffer, int col, int row, uint32_t co
 	}
 }
 
-bool collisionDetected(float circleX, float circleY, float radius, float pointX, float pointY)
+static bool collisionDetected(float circleX, float circleY, float radius, float pointX, float pointY)
 {
 	return sqrt((pointX - circleX) * (pointX - circleX) + (pointY - circleY) * (pointY - circleY)) < radius;
 }
@@ -548,7 +548,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 				bulletReset(i);
 		}
 
-	// create asteroids
+	// create new level asteroids
 	if (countAsteroids() == 0)
 	{
 		for (int i = 0; i < state->asteroids; ++i)
@@ -557,8 +557,18 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 			asteroids[i].size = ASTEROID_BIG;
 			asteroids[i].verts = ASTEROID_BIG_VERTS;
 			asteroids[i].position.angle = (float)(rand() % 360);
-			asteroids[i].position.x = (float)(rand() % MAX_COLS);
-			asteroids[i].position.y = (float)(rand() % MAX_ROWS);
+			asteroids[i].position.x = (float)(rand() % MAX_COLS) - (MAX_COLS / 2);
+			asteroids[i].position.y = (float)(rand() % MAX_ROWS) - (MAX_ROWS / 2);
+
+			// prevent starting on top of ship
+			while (collisionDetected(asteroids[i].position.x, asteroids[i].position.y,
+				asteroids[i].size*3,
+				ship.position.x, ship.position.y))
+			{
+				asteroids[i].position.x = (float)(rand() % MAX_COLS) - (MAX_COLS / 2);
+				asteroids[i].position.y = (float)(rand() % MAX_ROWS) - (MAX_ROWS / 2);
+			}
+
 			asteroids[i].position.dx = sinf(asteroids[i].position.angle) * ASTEROID_SPEED * input->dtForFrame;
 			asteroids[i].position.dy = cosf(asteroids[i].position.angle) * ASTEROID_SPEED * input->dtForFrame;
 
@@ -589,10 +599,11 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 			for (int b = 0; b < MAX_BULLETS; ++b)
 				if (bullets[b].alive)
 					if (collisionDetected(asteroids[i].position.x, asteroids[i].position.y,
-						asteroids[i].size,
+						(asteroids[i].size / 100.0f) * 95.0f,
 						bullets[b].position.dx, bullets[b].position.dy))
 					{
 						asteroids[i].alive = false;
+						bullets[b].alive = false;
 						state->score += 10;
 						break;
 					}
@@ -708,15 +719,15 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	}
 
 	// rotated vectors
-	//if (state->hud)
-	//{
-	//	drawDigits(buffer, 1, 48, new_vectors[0][0], GREEN);
-	//	drawDigits(buffer, 15, 48, new_vectors[0][1], GREEN);
-	//	drawDigits(buffer, 35, 48, new_vectors[1][0], GREEN);
-	//	drawDigits(buffer, 49, 48, new_vectors[1][1], GREEN);
-	//	drawDigits(buffer, 70, 48, new_vectors[2][0], GREEN);
-	//	drawDigits(buffer, 84, 48, new_vectors[2][1], GREEN);
-	//}
+	if (state->hud && verts == 3)
+	{
+		drawDigits(buffer, 1, 48, new_vectors[0][0], GREEN);
+		drawDigits(buffer, 15, 48, new_vectors[0][1], GREEN);
+		drawDigits(buffer, 35, 48, new_vectors[1][0], GREEN);
+		drawDigits(buffer, 49, 48, new_vectors[1][1], GREEN);
+		drawDigits(buffer, 70, 48, new_vectors[2][0], GREEN);
+		drawDigits(buffer, 84, 48, new_vectors[2][1], GREEN);
+	}
 
 	// update scale
 	for (int i = 0; i < verts; ++i)
@@ -726,15 +737,15 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	}
 
 	// scaled vectors
-	//if (state->hud)
-	//{
-	//	drawDigits(buffer, 1, 54, new_vectors[0][0], CYAN);
-	//	drawDigits(buffer, 15, 54, new_vectors[0][1], CYAN);
-	//	drawDigits(buffer, 35, 54, new_vectors[1][0], CYAN);
-	//	drawDigits(buffer, 49, 54, new_vectors[1][1], CYAN);
-	//	drawDigits(buffer, 70, 54, new_vectors[2][0], CYAN);
-	//	drawDigits(buffer, 84, 54, new_vectors[2][1], CYAN);
-	//}
+	if (state->hud && verts == 3)
+	{
+		drawDigits(buffer, 1, 54, new_vectors[0][0], CYAN);
+		drawDigits(buffer, 15, 54, new_vectors[0][1], CYAN);
+		drawDigits(buffer, 35, 54, new_vectors[1][0], CYAN);
+		drawDigits(buffer, 49, 54, new_vectors[1][1], CYAN);
+		drawDigits(buffer, 70, 54, new_vectors[2][0], CYAN);
+		drawDigits(buffer, 84, 54, new_vectors[2][1], CYAN);
+	}
 
 	// translate co-ordinates
 	for (int i = 0; i < verts; ++i)
@@ -744,15 +755,15 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	}
 
 	// translated vectors
-	//if (state->hud)
-	//{
-	//	drawDigits(buffer, 1, 60, new_vectors[0][0], ORANGE);
-	//	drawDigits(buffer, 15, 60, new_vectors[0][1], ORANGE);
-	//	drawDigits(buffer, 35, 60, new_vectors[1][0], ORANGE);
-	//	drawDigits(buffer, 49, 60, new_vectors[1][1], ORANGE);
-	//	drawDigits(buffer, 70, 60, new_vectors[2][0], ORANGE);
-	//	drawDigits(buffer, 84, 60, new_vectors[2][1], ORANGE);
-	//}
+	if (state->hud && verts == 3)
+	{
+		drawDigits(buffer, 1, 60, new_vectors[0][0], ORANGE);
+		drawDigits(buffer, 15, 60, new_vectors[0][1], ORANGE);
+		drawDigits(buffer, 35, 60, new_vectors[1][0], ORANGE);
+		drawDigits(buffer, 49, 60, new_vectors[1][1], ORANGE);
+		drawDigits(buffer, 70, 60, new_vectors[2][0], ORANGE);
+		drawDigits(buffer, 84, 60, new_vectors[2][1], ORANGE);
+	}
 
 	uint32_t original = colour;
 
