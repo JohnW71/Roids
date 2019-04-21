@@ -42,7 +42,7 @@ static void gameReset(struct gameState *state)
 	state->score = 0;
 	state->lives = 3;
 	state->asteroids = 2;
-	state->hud = true;
+	state->hud = false;
 	state->fps = true;
 	shipReset();
 	bulletsReset();
@@ -110,6 +110,41 @@ static short countAsteroids()
 		if (asteroids[i].alive)
 			++c;
 	return c;
+}
+
+static void createAsteroid(short parent, float dtForFrame)
+{
+	for (int child = 0; child < MAX_ASTEROIDS; ++child)
+	{
+		if (!asteroids[child].alive)
+		{
+			if (asteroids[parent].size == ASTEROID_BIG)
+			{
+				asteroids[child].size = ASTEROID_MED;
+				asteroids[child].verts = ASTEROID_MED_VERTS;
+			}
+			else if (asteroids[parent].size == ASTEROID_MED)
+			{
+				asteroids[child].size = ASTEROID_SMALL;
+				asteroids[child].verts = ASTEROID_SMALL_VERTS;
+			}
+			asteroids[child].alive = true;
+			asteroids[child].position.angle = (float)(rand() % 360);
+			asteroids[child].position.x = asteroids[parent].position.x;
+			asteroids[child].position.y = asteroids[parent].position.y;
+			asteroids[child].position.dx = sinf(asteroids[child].position.angle) * ASTEROID_SPEED * dtForFrame;
+			asteroids[child].position.dy = cosf(asteroids[child].position.angle) * ASTEROID_SPEED * dtForFrame;
+
+			for (int v = 0; v < asteroids[child].verts; ++v)
+			{
+				int variance = rand() % 7;
+				float vector = ((float)v / (float)asteroids[child].verts) * (2 * Pi32);
+				asteroids[child].position.vectors[v].x = (float)asteroids[child].size * sinf(vector) + (float)variance;
+				asteroids[child].position.vectors[v].y = (float)asteroids[child].size * cosf(vector) + (float)variance;
+			}
+			return;
+		}
+	}
 }
 
 // draw coloured line from start point to end point
@@ -589,6 +624,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	for (int i = 0; i < MAX_ASTEROIDS; ++i)
 		if (asteroids[i].alive)
 		{
+			// check for ship collision
 			if (collisionDetected(asteroids[i].position.x, asteroids[i].position.y, 
 				asteroids[i].size,
 				ship.position.x, ship.position.y))
@@ -596,6 +632,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 				gameReload(state);
 			}
 
+			// check for bullet collision
 			for (int b = 0; b < MAX_BULLETS; ++b)
 				if (bullets[b].alive)
 					if (collisionDetected(asteroids[i].position.x, asteroids[i].position.y,
@@ -604,7 +641,14 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 					{
 						asteroids[i].alive = false;
 						bullets[b].alive = false;
-						state->score += 10;
+						++state->score;
+
+						if (asteroids[i].size == ASTEROID_SMALL)
+							break;
+
+						// make 2 smaller asteroids
+						createAsteroid(i, input->dtForFrame);
+						createAsteroid(i, input->dtForFrame);
 						break;
 					}
 

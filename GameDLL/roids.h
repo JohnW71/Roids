@@ -22,10 +22,10 @@
 #define ASTEROID_ROTATION 1.0f
 #define ASTEROID_BIG_VERTS 20
 #define ASTEROID_MED_VERTS 12
-#define ASTEROID_SMALL_VERTS 6
+#define ASTEROID_SMALL_VERTS 8
 #define ASTEROID_BIG 30.0f
 #define ASTEROID_MED 15.0f
-#define ASTEROID_SMALL 0.0f
+#define ASTEROID_SMALL 7.5f
 #define COL_WIDTH 3
 #define ROW_HEIGHT 3
 #define MAX_COLS (WINDOW_WIDTH / COL_WIDTH)
@@ -84,6 +84,7 @@ void wrapCoordinates(int, int, int *, int *);
 void wrapModel(struct Position *);
 void drawDigit(struct gameDisplayBuffer *, short, short, short, uint32_t);
 void drawDigits(struct gameDisplayBuffer *, short, short, float, uint32_t);
+void createAsteroid(short, float);
 
 struct threadContext
 {
