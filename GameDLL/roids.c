@@ -380,13 +380,15 @@ static void drawDigits(struct gameDisplayBuffer *buffer, short col, short row, f
 		colour = RED;
 
 	int value = abs((int)v);
-	int hundreds = (int)value / 100;
-	int tens = ((int)value % 100) / 10;
-	int ones = ((int)value % 100) % 10;
+	int thousands = (int)value / 1000;
+	int hundreds = (int)(value % 1000) / 100;
+	int tens = ((int)(value % 1000) % 100) / 10;
+	int ones = ((int)(value % 1000) % 100) % 10;
 
-	drawDigit(buffer, col, row, hundreds, colour);
-	drawDigit(buffer, col + 4, row, tens, colour);
-	drawDigit(buffer, col + 8, row, ones, colour);
+	drawDigit(buffer, col, row, thousands, colour);
+	drawDigit(buffer, col + 4, row, hundreds, colour);
+	drawDigit(buffer, col + 8, row, tens, colour);
+	drawDigit(buffer, col + 12, row, ones, colour);
 }
 
 static void drawDigit(struct gameDisplayBuffer *buffer, short col, short row, short digit, uint32_t colour)
@@ -698,27 +700,27 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
 		// position
 		drawDigits(buffer, offsetCol((int)ship.position.x) + 10, offsetRow((int)ship.position.y) + 6, ship.position.x, CYAN);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 24, offsetRow((int)ship.position.y) + 6, ship.position.y, CYAN);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 28, offsetRow((int)ship.position.y) + 6, ship.position.y, CYAN);
 
 		// thrust
 		drawDigits(buffer, offsetCol((int)ship.position.x) + 10, offsetRow((int)ship.position.y) + 12, ship.position.dx, ORANGE);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 24, offsetRow((int)ship.position.y) + 12, ship.position.dy, ORANGE);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 28, offsetRow((int)ship.position.y) + 12, ship.position.dy, ORANGE);
 
 		// vec1
 		drawDigits(buffer, offsetCol((int)ship.position.x) + 10, offsetRow((int)ship.position.y) + 18, ship.position.vectors[0].x, YELLOW);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 24, offsetRow((int)ship.position.y) + 18, ship.position.vectors[0].y, YELLOW);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 28, offsetRow((int)ship.position.y) + 18, ship.position.vectors[0].y, YELLOW);
 
 		// vec2
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 40, offsetRow((int)ship.position.y) + 18, ship.position.vectors[1].x, YELLOW);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 54, offsetRow((int)ship.position.y) + 18, ship.position.vectors[1].y, YELLOW);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 48, offsetRow((int)ship.position.y) + 18, ship.position.vectors[1].x, YELLOW);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 66, offsetRow((int)ship.position.y) + 18, ship.position.vectors[1].y, YELLOW);
 
 		// vec3
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 70, offsetRow((int)ship.position.y) + 18, ship.position.vectors[2].x, YELLOW);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 84, offsetRow((int)ship.position.y) + 18, ship.position.vectors[2].y, YELLOW);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 86, offsetRow((int)ship.position.y) + 18, ship.position.vectors[2].x, YELLOW);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 104, offsetRow((int)ship.position.y) + 18, ship.position.vectors[2].y, YELLOW);
 
 		// grid size
 		drawDigits(buffer, 1, 13, MAX_COLS, BLUE);
-		drawDigits(buffer, 15, 13, MAX_ROWS, BLUE);
+		drawDigits(buffer, 19, 13, MAX_ROWS, BLUE);
 
 		// asteroid count
 		drawDigits(buffer, 1, 19, countAsteroids(), BLUE);
@@ -736,7 +738,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 			if (bullets[i].alive)
 			{
 				drawDigits(buffer, 1, rows, bullets[i].position.dx, RED);
-				drawDigits(buffer, 15, rows, bullets[i].position.dy, RED);
+				drawDigits(buffer, 19, rows, bullets[i].position.dy, RED);
 				rows += 6;
 			}
 	}
@@ -774,11 +776,11 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	if (state->hud && verts == 3)
 	{
 		drawDigits(buffer, offsetCol((int)ship.position.x) + 10, offsetRow((int)ship.position.y) + 24, new_vectors[0][0], GREEN);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 24, offsetRow((int)ship.position.y) + 24, new_vectors[0][1], GREEN);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 40, offsetRow((int)ship.position.y) + 24, new_vectors[1][0], GREEN);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 54, offsetRow((int)ship.position.y) + 24, new_vectors[1][1], GREEN);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 70, offsetRow((int)ship.position.y) + 24, new_vectors[2][0], GREEN);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 84, offsetRow((int)ship.position.y) + 24, new_vectors[2][1], GREEN);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 28, offsetRow((int)ship.position.y) + 24, new_vectors[0][1], GREEN);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 48, offsetRow((int)ship.position.y) + 24, new_vectors[1][0], GREEN);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 66, offsetRow((int)ship.position.y) + 24, new_vectors[1][1], GREEN);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 86, offsetRow((int)ship.position.y) + 24, new_vectors[2][0], GREEN);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 104, offsetRow((int)ship.position.y) + 24, new_vectors[2][1], GREEN);
 	}
 
 	// update scale
@@ -792,11 +794,11 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	if (state->hud && verts == 3)
 	{
 		drawDigits(buffer, offsetCol((int)ship.position.x) + 10, offsetRow((int)ship.position.y) + 30, new_vectors[0][0], CYAN);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 24, offsetRow((int)ship.position.y) + 30, new_vectors[0][1], CYAN);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 40, offsetRow((int)ship.position.y) + 30, new_vectors[1][0], CYAN);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 54, offsetRow((int)ship.position.y) + 30, new_vectors[1][1], CYAN);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 70, offsetRow((int)ship.position.y) + 30, new_vectors[2][0], CYAN);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 84, offsetRow((int)ship.position.y) + 30, new_vectors[2][1], CYAN);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 28, offsetRow((int)ship.position.y) + 30, new_vectors[0][1], CYAN);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 48, offsetRow((int)ship.position.y) + 30, new_vectors[1][0], CYAN);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 66, offsetRow((int)ship.position.y) + 30, new_vectors[1][1], CYAN);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 86, offsetRow((int)ship.position.y) + 30, new_vectors[2][0], CYAN);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 104, offsetRow((int)ship.position.y) + 30, new_vectors[2][1], CYAN);
 	}
 
 	// translate co-ordinates
@@ -810,11 +812,11 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	if (state->hud && verts == 3)
 	{
 		drawDigits(buffer, offsetCol((int)ship.position.x) + 10, offsetRow((int)ship.position.y) + 36, new_vectors[0][0], ORANGE);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 24, offsetRow((int)ship.position.y) + 36, new_vectors[0][1], ORANGE);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 40, offsetRow((int)ship.position.y) + 36, new_vectors[1][0], ORANGE);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 54, offsetRow((int)ship.position.y) + 36, new_vectors[1][1], ORANGE);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 70, offsetRow((int)ship.position.y) + 36, new_vectors[2][0], ORANGE);
-		drawDigits(buffer, offsetCol((int)ship.position.x) + 84, offsetRow((int)ship.position.y) + 36, new_vectors[2][1], ORANGE);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 28, offsetRow((int)ship.position.y) + 36, new_vectors[0][1], ORANGE);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 48, offsetRow((int)ship.position.y) + 36, new_vectors[1][0], ORANGE);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 66, offsetRow((int)ship.position.y) + 36, new_vectors[1][1], ORANGE);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 86, offsetRow((int)ship.position.y) + 36, new_vectors[2][0], ORANGE);
+		drawDigits(buffer, offsetCol((int)ship.position.x) + 104, offsetRow((int)ship.position.y) + 36, new_vectors[2][1], ORANGE);
 	}
 
 	uint32_t original = colour;
