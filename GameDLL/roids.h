@@ -31,9 +31,9 @@
 #define MAX_COLS (WINDOW_WIDTH / COL_WIDTH)
 #define MAX_ROWS (WINDOW_HEIGHT / ROW_HEIGHT)
 #define MAX_VERTS 20
-#define MAX_BULLETS 10
+#define MAX_BULLETS 8
 #define MAX_ASTEROIDS 42
-#define MAX_NEW_ASTEROIDS 6
+#define MAX_NEW_ASTEROIDS 8
 
 #define Pi32 3.14159265359f
 #define assert(expression) if(!(expression)) {*(int *)0 = 0;}
