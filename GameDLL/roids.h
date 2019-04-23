@@ -84,6 +84,7 @@ void wrapModel(struct Position *);
 void drawDigit(struct gameDisplayBuffer *, short, short, short, uint32_t);
 void drawDigits(struct gameDisplayBuffer *, short, short, float, uint32_t);
 void createAsteroid(short, float);
+void gameOver(struct gameDisplayBuffer *, struct gameState *);
 
 struct threadContext
 {
@@ -113,6 +114,7 @@ struct gameState
 	short asteroids;
 	bool hud;
 	bool fps;
+	bool playing;
 };
 
 struct gameMemory
