@@ -14,7 +14,7 @@
 
 #define SHIP_SCALE 1.2f
 #define TURN_SPEED 4.0f
-#define MOVE_SPEED 20.0f
+#define MOVE_SPEED 30.0f
 #define SLOW_SPEED 1.0f
 #define BULLET_SPEED 40.0f
 #define ASTEROID_SCALE 1.0f

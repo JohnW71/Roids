@@ -63,7 +63,7 @@ static void shipReset(void)
 	ship.position.vectors[0].y = -6.0f;
 	ship.position.vectors[1].x = -4.0f;
 	ship.position.vectors[1].y = 4.0f;
-	ship.position.vectors[2].x = 4.0f;
+	ship.position.vectors[2].x = 5.0f;
 	ship.position.vectors[2].y = 4.0f;
 }
 
@@ -834,6 +834,8 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
 static void gameOver(struct gameDisplayBuffer *buffer, struct gameState *state)
 {
+	drawDigits(buffer, 1, 1, state->score, WHITE);
+
 	//GAME OVER
 	// G
 	line(buffer, -80, -19, -80, -10, BLUE); // left
