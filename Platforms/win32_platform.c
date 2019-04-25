@@ -226,17 +226,17 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		if (!paused)
 		{
 			// get mouse position and button states
-			POINT mouseP;
-			GetCursorPos(&mouseP);
-			ScreenToClient(hwnd, &mouseP); // re-map co-ordinates from screen to window
-			newInput->mouseX = mouseP.x;
-			newInput->mouseY = mouseP.y;
-			newInput->mouseZ = 0; // mousewheel
-			processKeyboardMessage(&newInput->mouseButtons[0], GetKeyState(VK_LBUTTON) & (1 << 15));
-			processKeyboardMessage(&newInput->mouseButtons[1], GetKeyState(VK_MBUTTON) & (1 << 15));
-			processKeyboardMessage(&newInput->mouseButtons[2], GetKeyState(VK_RBUTTON) & (1 << 15));
-			processKeyboardMessage(&newInput->mouseButtons[3], GetKeyState(VK_XBUTTON1) & (1 << 15));
-			processKeyboardMessage(&newInput->mouseButtons[4], GetKeyState(VK_XBUTTON2) & (1 << 15));
+			//POINT mouseP;
+			//GetCursorPos(&mouseP);
+			//ScreenToClient(hwnd, &mouseP); // re-map co-ordinates from screen to window
+			//newInput->mouseX = mouseP.x;
+			//newInput->mouseY = mouseP.y;
+			//newInput->mouseZ = 0; // mousewheel
+			//processKeyboardMessage(&newInput->mouseButtons[0], GetKeyState(VK_LBUTTON) & (1 << 15));
+			//processKeyboardMessage(&newInput->mouseButtons[1], GetKeyState(VK_MBUTTON) & (1 << 15));
+			//processKeyboardMessage(&newInput->mouseButtons[2], GetKeyState(VK_RBUTTON) & (1 << 15));
+			//processKeyboardMessage(&newInput->mouseButtons[3], GetKeyState(VK_XBUTTON1) & (1 << 15));
+			//processKeyboardMessage(&newInput->mouseButtons[4], GetKeyState(VK_XBUTTON2) & (1 << 15));
 
 			//TODO don't poll disconnected controllers as it causes a frame hit
 			DWORD maxControllerCount = XUSER_MAX_COUNT;
@@ -260,8 +260,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 					XINPUT_GAMEPAD *pad = &controllerState.Gamepad;
 
 					// square deadzone
-					//newController->stickAverageX = processXinputStickValue(pad->sThumbLX, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
-					//newController->stickAverageY = processXinputStickValue(pad->sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+					newController->stickAverageX = processXinputStickValue(pad->sThumbLX, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+					newController->stickAverageY = processXinputStickValue(pad->sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
 
 					//if ((newController->stickAverageX != 0.0f) || (newController->stickAverageY != 0.0f))
 					//	newController->isAnalog = true;
@@ -934,7 +934,7 @@ static void processPendingMessages(struct win32state *state, struct gameControll
 					else if (VKCode == VK_RIGHT)
 						processKeyboardMessage(&keyboardController->actionRight, isDown);
 					else if (VKCode == VK_SPACE)
-						processKeyboardMessage(&keyboardController->back, isDown);
+						processKeyboardMessage(&keyboardController->shoot, isDown);
 					else if (VKCode == VK_ESCAPE)
 					{
 						running = false;

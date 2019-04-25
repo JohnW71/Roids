@@ -578,18 +578,20 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		struct gameControllerInput *controller = getController(input, controllerIndex);
 		if (controller->isAnalog)
 		{
-			//ship.position.rotation += (int)(4.0f * controller->stickAverageX);
+			//ship.position.angle += controller->stickAverageX;
 		}
 		else
 		{
 			// update ship direction
+			ship.position.angle += controller->stickAverageX / 4.0f;
+
 			if (controller->moveLeft.endedDown || controller->actionLeft.endedDown)
 				ship.position.angle -= TURN_SPEED * input->dtForFrame;
 			if (controller->moveRight.endedDown || controller->actionRight.endedDown)
 				ship.position.angle += TURN_SPEED * input->dtForFrame;
 
 			// thrust
-			if (controller->actionUp.endedDown)
+			if (controller->actionUp.endedDown || controller->rightShoulder.endedDown)
 			{
 				// acceleration changes velocity over time
 				ship.position.dx += sinf(ship.position.angle) * MOVE_SPEED * input->dtForFrame;
@@ -597,14 +599,15 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 			}
 
 			// reset
-			if (controller->reset.endedDown)
+			if (controller->reset.endedDown || controller->back.endedDown)
 			{
 				gameReset(state);
 				controller->reset.endedDown = false;
+				controller->back.endedDown = false;
 			}
 
 			// shoot
-			if (controller->back.endedDown)
+			if (controller->shoot.endedDown || controller->actionDown.endedDown)
 			{
 				for (int i = 0; i < MAX_BULLETS; ++i)
 				{
@@ -617,7 +620,8 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 						break;
 					}
 				}
-				controller->back.endedDown = false;
+				controller->shoot.endedDown = false;
+				controller->actionDown.endedDown = false;
 			}
 
 			// hud

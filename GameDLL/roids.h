@@ -136,12 +136,12 @@ struct gameControllerInput
 {
 	bool isConnected;
 	bool isAnalog;
-	//float stickAverageX;
-	//float stickAverageY;
+	float stickAverageX;
+	float stickAverageY;
 
 	union
 	{
-		struct gameButtonState buttons[15];
+		struct gameButtonState buttons[16];
 		struct
 		{
 			struct gameButtonState moveUp;
@@ -160,6 +160,7 @@ struct gameControllerInput
 			struct gameButtonState fps;
 			struct gameButtonState hud;
 			struct gameButtonState reset;
+			struct gameButtonState shoot;
 
 			struct gameButtonState back;
 			struct gameButtonState start;
