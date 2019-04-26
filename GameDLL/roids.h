@@ -26,9 +26,9 @@
 #define ASTEROID_BIG 30.0f
 #define ASTEROID_MED 15.0f
 #define ASTEROID_SMALL 7.5f
-#define BLOB_SIZE 3
-#define MAX_COLS (WINDOW_WIDTH / BLOB_SIZE)
-#define MAX_ROWS (WINDOW_HEIGHT / BLOB_SIZE)
+//#define BLOB_SIZE 3
+//#define MAX_COLS (WINDOW_WIDTH / BLOB_SIZE)
+//#define MAX_ROWS (WINDOW_HEIGHT / BLOB_SIZE)
 #define MAX_VERTS 20
 #define MAX_BULLETS 8
 #define MAX_NEW_ASTEROIDS 10
@@ -161,6 +161,10 @@ struct gameControllerInput
 			struct gameButtonState hud;
 			struct gameButtonState reset;
 			struct gameButtonState shoot;
+			struct gameButtonState one;
+			struct gameButtonState two;
+			struct gameButtonState three;
+			struct gameButtonState four;
 
 			struct gameButtonState back;
 			struct gameButtonState start;

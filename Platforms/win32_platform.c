@@ -925,6 +925,14 @@ static void processPendingMessages(struct win32state *state, struct gameControll
 						processKeyboardMessage(&keyboardController->hud, isDown);
 					else if (VKCode == 'R')
 						processKeyboardMessage(&keyboardController->reset, isDown);
+					else if (VKCode == '1')
+						processKeyboardMessage(&keyboardController->one, isDown);
+					else if (VKCode == '2')
+						processKeyboardMessage(&keyboardController->two, isDown);
+					else if (VKCode == '3')
+						processKeyboardMessage(&keyboardController->three, isDown);
+					else if (VKCode == '4')
+						processKeyboardMessage(&keyboardController->four, isDown);
 					else if (VKCode == VK_UP)
 						processKeyboardMessage(&keyboardController->actionUp, isDown);
 					else if (VKCode == VK_DOWN)

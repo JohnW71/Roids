@@ -2,6 +2,10 @@
 
 #include <math.h>
 
+int BLOB_SIZE = 3;
+int MAX_COLS;
+int MAX_ROWS;
+
 static void outputSound(struct gameState *state, struct gameSoundOutputBuffer *soundBuffer, int toneHz)
 {
 	//int16_t toneVolume = 3000;
@@ -566,6 +570,9 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	struct gameState *state = (struct gameState *)memory->permanentStorage;
 	if (!memory->isInitialized)
 	{
+		MAX_COLS = (WINDOW_WIDTH / BLOB_SIZE);
+		MAX_ROWS = (WINDOW_HEIGHT / BLOB_SIZE);
+
 		memory->isInitialized = true;
 		srand((unsigned int)time(NULL));
 		//state->toneHz = 512;
@@ -642,6 +649,40 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 				else
 					state->fps = true;
 				controller->fps.endedDown = false;
+			}
+
+			// one
+			if (controller->one.endedDown)
+			{
+				BLOB_SIZE = 1;
+				MAX_COLS = (WINDOW_WIDTH / BLOB_SIZE);
+				MAX_ROWS = (WINDOW_HEIGHT / BLOB_SIZE);
+				gameReset(state);
+				controller->one.endedDown = false;
+			}
+			if (controller->two.endedDown)
+			{
+				BLOB_SIZE = 2;
+				MAX_COLS = (WINDOW_WIDTH / BLOB_SIZE);
+				MAX_ROWS = (WINDOW_HEIGHT / BLOB_SIZE);
+				gameReset(state);
+				controller->two.endedDown = false;
+			}
+			if (controller->three.endedDown)
+			{
+				BLOB_SIZE = 3;
+				MAX_COLS = (WINDOW_WIDTH / BLOB_SIZE);
+				MAX_ROWS = (WINDOW_HEIGHT / BLOB_SIZE);
+				gameReset(state);
+				controller->three.endedDown = false;
+			}
+			if (controller->four.endedDown)
+			{
+				BLOB_SIZE = 4;
+				MAX_COLS = (WINDOW_WIDTH / BLOB_SIZE);
+				MAX_ROWS = (WINDOW_HEIGHT / BLOB_SIZE);
+				gameReset(state);
+				controller->four.endedDown = false;
 			}
 		}
 	}
@@ -810,8 +851,8 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 			drawDigits(buffer, offsetCol((int)ship.position.x) + 104, offsetRow((int)ship.position.y) + 18, ship.position.vectors[2].y, YELLOW);
 
 			// grid size
-			drawDigits(buffer, 1, 13, MAX_COLS, BLUE);
-			drawDigits(buffer, 19, 13, MAX_ROWS, BLUE);
+			drawDigits(buffer, 1, 13, (float)MAX_COLS, BLUE);
+			drawDigits(buffer, 19, 13, (float)MAX_ROWS, BLUE);
 
 			// asteroid count
 			drawDigits(buffer, 1, 19, countAsteroids(), BLUE);
