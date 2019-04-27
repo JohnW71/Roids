@@ -141,7 +141,7 @@ struct gameControllerInput
 
 	union
 	{
-		struct gameButtonState buttons[16];
+		struct gameButtonState buttons[20];
 		struct
 		{
 			struct gameButtonState moveUp;
