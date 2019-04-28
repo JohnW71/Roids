@@ -2,9 +2,9 @@
 
 #include <math.h>
 
-int BLOB_SIZE = 3;
-int MAX_COLS;
-int MAX_ROWS;
+static int BLOB_SIZE;
+static int MAX_COLS;
+static int MAX_ROWS;
 
 static void outputSound(struct gameState *state, struct gameSoundOutputBuffer *soundBuffer, int toneHz)
 {
@@ -48,7 +48,7 @@ static void gameReset(struct gameState *state)
 	state->lives = 3;
 	state->asteroids = 2;
 	state->hud = false;
-	state->fps = false;
+	state->fps = true;
 	state->playing = true;
 	shipReset();
 	bulletsReset();
@@ -126,15 +126,15 @@ static void createAsteroid(short parent, float dtForFrame)
 
 		if (!asteroids[child].alive)
 		{
-			if (asteroids[parent].size == ASTEROID_BIG)
+			if (asteroids[parent].size == ASTEROID_BIG_SIZE)
 			{
-				asteroids[child].size = ASTEROID_MED;
+				asteroids[child].size = ASTEROID_MED_SIZE;
 				asteroids[child].verts = ASTEROID_MED_VERTS;
 				sizeVariance = 5;
 			}
-			else if (asteroids[parent].size == ASTEROID_MED)
+			else if (asteroids[parent].size == ASTEROID_MED_SIZE)
 			{
-				asteroids[child].size = ASTEROID_SMALL;
+				asteroids[child].size = ASTEROID_SMALL_SIZE;
 				asteroids[child].verts = ASTEROID_SMALL_VERTS;
 				sizeVariance = 3;
 			}
@@ -570,6 +570,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	struct gameState *state = (struct gameState *)memory->permanentStorage;
 	if (!memory->isInitialized)
 	{
+		BLOB_SIZE = 3;
 		MAX_COLS = (WINDOW_WIDTH / BLOB_SIZE);
 		MAX_ROWS = (WINDOW_HEIGHT / BLOB_SIZE);
 
@@ -728,7 +729,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 			for (int i = 0; i < state->asteroids; ++i)
 			{
 				asteroids[i].alive = true;
-				asteroids[i].size = ASTEROID_BIG;
+				asteroids[i].size = ASTEROID_BIG_SIZE;
 				asteroids[i].verts = ASTEROID_BIG_VERTS;
 				asteroids[i].position.angle = (float)(rand() % 360);
 				asteroids[i].position.x = (float)(rand() % MAX_COLS) - (MAX_COLS / 2);
@@ -782,7 +783,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 							bullets[b].alive = false;
 							++state->score;
 
-							if (asteroids[i].size == ASTEROID_SMALL)
+							if (asteroids[i].size == ASTEROID_SMALL_SIZE)
 								break;
 
 							// make 2 smaller asteroids
@@ -819,11 +820,9 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 		drawDigits(buffer, 1, 1, state->score, WHITE);
 		drawDigit(buffer, 1, 7, state->lives, YELLOW);
 
+		// fps
 		if (state->fps)
-		{
-			// fps
 			drawDigits(buffer, MAX_COLS - 15, 1, FPS, BLUE);
-		}
 
 		if (state->hud)
 		{

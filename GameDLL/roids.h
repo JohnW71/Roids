@@ -5,17 +5,12 @@
 #include <stdlib.h>	// exit(), rand(), malloc()
 #include <time.h>	// time()
 
-//#define WINDOW_WIDTH 160
-//#define WINDOW_HEIGHT 100
-//#define WINDOW_WIDTH 960
-//#define WINDOW_HEIGHT 540
 #define WINDOW_WIDTH 1030
 #define WINDOW_HEIGHT 600
 
 #define SHIP_SCALE 1.2f
 #define TURN_SPEED 4.0f
 #define MOVE_SPEED 30.0f
-#define SLOW_SPEED 1.0f
 #define BULLET_SPEED 40.0f
 #define ASTEROID_SCALE 1.0f
 #define ASTEROID_SPEED 30.0f
@@ -23,14 +18,11 @@
 #define ASTEROID_BIG_VERTS 20
 #define ASTEROID_MED_VERTS 12
 #define ASTEROID_SMALL_VERTS 8
-#define ASTEROID_BIG 30.0f
-#define ASTEROID_MED 15.0f
-#define ASTEROID_SMALL 7.5f
-//#define BLOB_SIZE 3
-//#define MAX_COLS (WINDOW_WIDTH / BLOB_SIZE)
-//#define MAX_ROWS (WINDOW_HEIGHT / BLOB_SIZE)
+#define ASTEROID_BIG_SIZE 30.0f
+#define ASTEROID_MED_SIZE 15.0f
+#define ASTEROID_SMALL_SIZE 7.5f
 #define MAX_VERTS 20
-#define MAX_BULLETS 8
+#define MAX_BULLETS 6
 #define MAX_NEW_ASTEROIDS 10
 #define MAX_ASTEROIDS MAX_NEW_ASTEROIDS*7
 

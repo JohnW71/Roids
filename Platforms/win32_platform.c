@@ -2,14 +2,11 @@
 #define DEV_MODE 1
 
 #include <windows.h>
-#include <stdio.h> // sprintf
-#include <stdbool.h>
-#include <stdint.h>
+#include <stdio.h>
 #include <xinput.h>
 #include <dsound.h>
 
 #include "win32_platform.h"
-#include "..\GameDLL\roids.h"
 
 static struct win32displayBuffer backBuffer;
 static bool running;
@@ -301,13 +298,21 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 					processXinputDigitalButton(pad->wButtons, &oldController->rightShoulder, XINPUT_GAMEPAD_RIGHT_SHOULDER, &newController->rightShoulder);
 					processXinputDigitalButton(pad->wButtons, &oldController->start, XINPUT_GAMEPAD_START, &newController->start);
 					processXinputDigitalButton(pad->wButtons, &oldController->back, XINPUT_GAMEPAD_BACK, &newController->back);
-//if (aButton)
-//{
-//	XINPUT_VIBRATION vibration;
-//	vibration.wLeftMotorSpeed = 60000;
-//	vibration.wRightMotorSpeed = 60000;
-//	XInputSetState(0, &vibration);
-//}
+
+					if (pad->wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER)
+					{
+						XINPUT_VIBRATION vibration;
+						vibration.wLeftMotorSpeed = 60000;
+						vibration.wRightMotorSpeed = 60000;
+						XInputSetState(0, &vibration);
+					}
+					else
+					{
+						XINPUT_VIBRATION vibration;
+						vibration.wLeftMotorSpeed = 0;
+						vibration.wRightMotorSpeed = 0;
+						XInputSetState(0, &vibration);
+					}
 				}
 				else
 				{
@@ -902,8 +907,7 @@ static void processPendingMessages(struct win32state *state, struct gameControll
 				uint32_t VKCode = (uint32_t)msg.wParam;
 
 				bool wasDown = ((msg.lParam & (1 << 30)) != 0);
-				//TODO maybe can fix cppcheck error here with (uint32_t) 1
-				bool isDown = ((msg.lParam & (1 << 31)) == 0);
+				bool isDown = ((msg.lParam & ((uint32_t)1 << 31)) == 0);
 
 				if (wasDown != isDown)
 				{
