@@ -2,7 +2,7 @@
 #define DEV_MODE 1
 
 #include <windows.h>
-#include <stdio.h>
+//#include <stdio.h>
 #include <xinput.h>
 #include <dsound.h>
 
@@ -11,7 +11,7 @@
 static struct win32displayBuffer backBuffer;
 static bool running;
 static bool paused;
-static char logFile[] = "log.txt";
+//static char logFile[] = "log.txt";
 static LPDIRECTSOUNDBUFFER secondaryBuffer;
 
 // macros with parameters
@@ -71,11 +71,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	bool sleepIsGranular = (timeBeginPeriod(desiredSchedulerMs) == TIMERR_NOERROR);
 
 	// create log file
-	FILE *lf = fopen(logFile, "w");
-	if (lf == NULL)
-		MessageBox(NULL, "Can't open log file", "Error", MB_ICONEXCLAMATION | MB_OK);
-	else
-		fclose(lf);
+	//FILE *lf = fopen(logFile, "w");
+	//if (lf == NULL)
+	//	MessageBox(NULL, "Can't open log file", "Error", MB_ICONEXCLAMATION | MB_OK);
+	//else
+	//	fclose(lf);
 
 	loadXInput();
 	createBuffer(&backBuffer, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -99,7 +99,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 	HWND hwnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW,
 								wc.lpszClassName,
-								"Roids v0.3",
+								"Roids v0.4",
 								WS_BORDER | WS_CAPTION | WS_VISIBLE, // WS_EX_TOPMOST
 								CW_USEDEFAULT, CW_USEDEFAULT,
 								WINDOW_WIDTH+20, WINDOW_HEIGHT+40,
@@ -149,7 +149,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 												MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
 	if (!samples)
 	{
-		outs("Memory allocation failure: samples");
+		//outs("Memory allocation failure: samples");
 		MessageBox(NULL, "Memory allocation failure", "Error", MB_ICONEXCLAMATION | MB_OK);
 		VirtualFree(samples, 0, MEM_RELEASE);
 		return 0;
@@ -169,7 +169,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 	if (!state.gameMemoryBlock)
 	{
-		outs("Memory allocation failure: game memory block");
+		//outs("Memory allocation failure: game memory block");
 		MessageBox(NULL, "Memory allocation failure", "Error", MB_ICONEXCLAMATION | MB_OK);
 		VirtualFree(state.gameMemoryBlock, 0, MEM_RELEASE);
 		VirtualFree(samples, 0, MEM_RELEASE);
@@ -343,8 +343,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 			// update display
 			if (game.updateAndRender)
 				game.updateAndRender(&thread, &memory, newInput, &gameBuffer, FPS);
-			else
-				outs("game.updateAndRender is null!");
+			//else
+			//	outs("game.updateAndRender is null!");
 
 			LARGE_INTEGER audioWallClock = getWallClock();
 			float fromBeginToAudioSeconds = getSecondsElapsed(flipWallClock, audioWallClock, perfCountFrequency);
@@ -399,8 +399,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 				// update sound
 				if (game.getSoundSamples)
 					game.getSoundSamples(&thread, &memory, &soundBuffer);
-				else
-					outs("game.getSoundSamples is null!");
+				//else
+				//	outs("game.getSoundSamples is null!");
 
 				// audio debugging info
 				// struct win32debugTimeMarker *marker = &debugTimeMarkers[debugTimeMarkerIndex];
@@ -446,11 +446,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 				while (secondsElapsedForFrame < targetSecondsPerFrame)
 					secondsElapsedForFrame = getSecondsElapsed(lastCounter, getWallClock(), perfCountFrequency);
 			}
-			else
-			{
-				// missed frame rate
-				outs("Missed frame rate");
-			}
+			//else
+			//{
+			//	// missed frame rate
+			//	outs("Missed frame rate");
+			//}
 
 			LARGE_INTEGER endCounter = getWallClock();
 			float msPerFrame = 1000.0f * getSecondsElapsed(lastCounter, endCounter, perfCountFrequency);
@@ -550,18 +550,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-void outs(char *s)
-{
-	FILE *lf = fopen(logFile, "a");
-	if (lf == NULL)
-	{
-		MessageBox(NULL, "Can't open log file", "Error", MB_ICONEXCLAMATION | MB_OK);
-		return;
-	}
-
-	fprintf(lf, "%s\n", s);
-	fclose(lf);
-}
+//void outs(char *s)
+//{
+//	FILE *lf = fopen(logFile, "a");
+//	if (lf == NULL)
+//	{
+//		MessageBox(NULL, "Can't open log file", "Error", MB_ICONEXCLAMATION | MB_OK);
+//		return;
+//	}
+//
+//	fprintf(lf, "%s\n", s);
+//	fclose(lf);
+//}
 
 // strcat()
 static void catStrings(size_t sourceAcount, char *sourceA,
@@ -632,7 +632,7 @@ struct win32gameCode loadGameCode(char *sourceDLLname, char *tempDLLname)
 
 	if (!result.isValid)
 	{
-		outs("Failed loading game code DLL");
+		//outs("Failed loading game code DLL");
 		result.updateAndRender = 0;
 		result.getSoundSamples = 0;
 	}
@@ -720,10 +720,10 @@ static void loadXInput(void)
 		if (!XInputSetState)
 			XInputSetState = XInputSetStateStub;
 
-		outs("XInput loaded");
+		//outs("XInput loaded");
 	}
-	else
-		outs("XInput not loaded");
+	//else
+	//	outs("XInput not loaded");
 }
 
 static void initDSound(HWND hwnd, int32_t samplesPerSecond, int32_t bufferSize)
@@ -767,19 +767,19 @@ static void initDSound(HWND hwnd, int32_t samplesPerSecond, int32_t bufferSize)
 					else
 					{
 						// Diagnostic
-						outs("Failed setting format for primary sound buffer");
+						//outs("Failed setting format for primary sound buffer");
 					}
 				}
 				else
 				{
 					// Diagnostic
-					outs("Failed creating primary sound buffer");
+					//outs("Failed creating primary sound buffer");
 				}
 			}
 			else
 			{
 				// Diagnostic
-				outs("Failed setting co-operative level");
+				//outs("Failed setting co-operative level");
 			}
 
 			DSBUFFERDESC bufferDescription = {0};
@@ -795,20 +795,20 @@ static void initDSound(HWND hwnd, int32_t samplesPerSecond, int32_t bufferSize)
 			else
 			{
 				// Diagnostic
-				outs("Failed creating secondary sound buffer");
+				//outs("Failed creating secondary sound buffer");
 			}
 		}
 		else
 		{
 			// Diagnostic
-			outs("DirectSound creation failed");
+			//outs("DirectSound creation failed");
 		}
-		outs("DirectSound loaded");
+		//outs("DirectSound loaded");
 	}
 	else
 	{
 		// Diagnostic
-		outs("DirectSound not loaded");
+		//outs("DirectSound not loaded");
 	}
 }
 
@@ -949,8 +949,8 @@ static void processPendingMessages(struct win32state *state, struct gameControll
 						processKeyboardMessage(&keyboardController->four, isDown);
 					else if (VKCode == VK_UP)
 						processKeyboardMessage(&keyboardController->actionUp, isDown);
-					else if (VKCode == VK_DOWN)
-						processKeyboardMessage(&keyboardController->actionDown, isDown);
+					//else if (VKCode == VK_DOWN)
+					//	processKeyboardMessage(&keyboardController->actionDown, isDown);
 					else if (VKCode == VK_LEFT)
 						processKeyboardMessage(&keyboardController->actionLeft, isDown);
 					else if (VKCode == VK_RIGHT)

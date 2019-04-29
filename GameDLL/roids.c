@@ -48,7 +48,7 @@ static void gameReset(struct gameState *state)
 	state->lives = 3;
 	state->asteroids = 2;
 	state->hud = false;
-	state->fps = true;
+	state->fps = false;
 	state->playing = true;
 	shipReset();
 	bulletsReset();
@@ -122,10 +122,9 @@ static void createAsteroid(short parent, float dtForFrame)
 {
 	for (int child = parent + 1; child < MAX_ASTEROIDS; ++child)
 	{
-		short sizeVariance;
-
 		if (!asteroids[child].alive)
 		{
+			short sizeVariance;
 			if (asteroids[parent].size == ASTEROID_BIG_SIZE)
 			{
 				asteroids[child].size = ASTEROID_MED_SIZE;
@@ -599,7 +598,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 				ship.position.angle += TURN_SPEED * input->dtForFrame;
 
 			// thrust
-			if (controller->actionUp.endedDown || controller->rightShoulder.endedDown)
+			if (controller->moveUp.endedDown || controller->actionUp.endedDown || controller->rightShoulder.endedDown)
 			{
 				// acceleration changes velocity over time
 				ship.position.dx += sinf(ship.position.angle) * MOVE_SPEED * input->dtForFrame;

@@ -3,7 +3,7 @@
 #include "..\GameDLL\roids.h"
 
 int stringLength(char *);
-void outs(char *);
+//void outs(char *);
 void createBuffer(struct win32displayBuffer *, int, int);
 void displayBuffer(struct win32displayBuffer *, HDC);
 void loadXInput(void);
