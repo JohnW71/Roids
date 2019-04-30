@@ -10,20 +10,20 @@ static void outputSound(struct gameState *state, struct gameSoundOutputBuffer *s
 {
 	//int16_t toneVolume = 3000;
 	//int wavePeriod = soundBuffer->samplesPerSecond / toneHz;
-	int16_t *sampleOut = soundBuffer->samples;
+	//int16_t *sampleOut = soundBuffer->samples;
 
-	for (int sampleIndex = 0; sampleIndex < soundBuffer->sampleCount; ++sampleIndex)
-	{
+	//for (int sampleIndex = 0; sampleIndex < soundBuffer->sampleCount; ++sampleIndex)
+	//{
 		//float sineValue = sinf(state->tSine);
 		//int16_t sampleValue = (int16_t)(sineValue * toneVolume);
-		int16_t sampleValue = 0;
-		*sampleOut++ = sampleValue;
-		*sampleOut++ = sampleValue;
+		//int16_t sampleValue = 0;
+		//*sampleOut++ = sampleValue;
+		//*sampleOut++ = sampleValue;
 
 		//state->tSine += 2.0f * Pi32 * 1.0f / (float)wavePeriod;
 		//if (state->tSine > 2.0f * Pi32)
 		//	state->tSine -= 2.0f * Pi32;
-	}
+	//}
 }
 
 //#pragma comment(linker, "/export:gameGetSoundSamples")
@@ -33,6 +33,7 @@ GAME_GET_SOUND_SAMPLES(gameGetSoundSamples)
 	outputSound(state, soundBuffer, 400);
 }
 
+// reset on death
 static void gameReload(struct gameState *state)
 {
 	--state->lives;
@@ -42,6 +43,7 @@ static void gameReload(struct gameState *state)
 	asteroidsReset();
 }
 
+// reset entire game state
 static void gameReset(struct gameState *state)
 {
 	state->score = 0;
@@ -55,6 +57,7 @@ static void gameReset(struct gameState *state)
 	asteroidsReset();
 }
 
+// reset ship parameters
 static void shipReset(void)
 {
 	ship.verts = 3;
@@ -71,12 +74,14 @@ static void shipReset(void)
 	ship.position.vectors[2].y = 4.0f;
 }
 
+// reset all bullet parameters
 static void bulletsReset(void)
 {
 	for (int i = 0; i < MAX_BULLETS; ++i)
 		bulletReset(i);
 }
 
+// reset single bullet parameters
 static void bulletReset(int i)
 {
 	bullets[i].alive = false;
@@ -85,30 +90,29 @@ static void bulletReset(int i)
 	bullets[i].position.dy = 0;
 }
 
+// reset all asteroid parameters
 static void asteroidsReset(void)
 {
 	for (int i = 0; i < MAX_ASTEROIDS; ++i)
-		asteroidReset(i);
-}
-
-static void asteroidReset(int i)
-{
-	asteroids[i].alive = false;
-	asteroids[i].size = 0.0f;
-	asteroids[i].verts = 0;
-	asteroids[i].position.angle = 0.0f;
-	asteroids[i].position.x = 0;
-	asteroids[i].position.y = 0;
-	asteroids[i].position.dx = 0;
-	asteroids[i].position.dy = 0;
-
-	for (int v = 0; v < MAX_VERTS; ++v)
 	{
-		asteroids[i].position.vectors[v].x = 0.0f;
-		asteroids[i].position.vectors[v].y = 0.0f;
+		asteroids[i].alive = false;
+		asteroids[i].size = 0.0f;
+		asteroids[i].verts = 0;
+		asteroids[i].position.angle = 0.0f;
+		asteroids[i].position.x = 0;
+		asteroids[i].position.y = 0;
+		asteroids[i].position.dx = 0;
+		asteroids[i].position.dy = 0;
+
+		for (int v = 0; v < MAX_VERTS; ++v)
+		{
+			asteroids[i].position.vectors[v].x = 0.0f;
+			asteroids[i].position.vectors[v].y = 0.0f;
+		}
 	}
 }
 
+// count live asteroids
 static short countAsteroids()
 {
 	short c = 0;
@@ -118,6 +122,7 @@ static short countAsteroids()
 	return c;
 }
 
+// create a random asteroid of correct size and position
 static void createAsteroid(short parent, float dtForFrame)
 {
 	for (int child = parent + 1; child < MAX_ASTEROIDS; ++child)
@@ -271,6 +276,7 @@ static void wrapCoordinates(int xIn, int yIn, int *xOut, int *yOut)
 		*yOut = yIn - MAX_ROWS;
 }
 
+// toroidal wrapping
 static void wrapModel(struct Position *position)
 {
 	if (position->x < 0.0f)
@@ -309,6 +315,7 @@ static void blob(struct gameDisplayBuffer *buffer, int col, int row, uint32_t co
 	}
 }
 
+// check if point is inside a circle
 static bool collisionDetected(float circleX, float circleY, float radius, float pointX, float pointY)
 {
 	return sqrt((pointX - circleX) * (pointX - circleX) + (pointY - circleY) * (pointY - circleY)) < radius;
@@ -375,6 +382,7 @@ static bool collisionDetected(float circleX, float circleY, float radius, float 
 //	}
 //}
 
+// display 4 digits at specified position
 static void drawDigits(struct gameDisplayBuffer *buffer, short col, short row, float v, uint32_t colour)
 {
 	if (v < 0)
@@ -392,6 +400,7 @@ static void drawDigits(struct gameDisplayBuffer *buffer, short col, short row, f
 	drawDigit(buffer, col + 12, row, ones, colour);
 }
 
+// display digit at specified position
 static void drawDigit(struct gameDisplayBuffer *buffer, short col, short row, short digit, uint32_t colour)
 {
 	switch (digit)
@@ -875,6 +884,7 @@ GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 	}
 }
 
+// draw game over screen and options
 static void gameOver(struct gameDisplayBuffer *buffer, struct gameState *state)
 {
 	drawDigits(buffer, 1, 1, state->score, WHITE);

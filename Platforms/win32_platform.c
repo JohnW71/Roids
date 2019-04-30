@@ -104,20 +104,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 								CW_USEDEFAULT, CW_USEDEFAULT,
 								WINDOW_WIDTH+20, WINDOW_HEIGHT+40,
 								NULL, NULL,	hInstance, NULL);
-	//HWND hwnd =
-	//	CreateWindowExA(
-	//		0, // WS_EX_TOPMOST|WS_EX_LAYERED,
-	//		wc.lpszClassName,
-	//		"Handmade Hero",
-	//		WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-	//		CW_USEDEFAULT,
-	//		CW_USEDEFAULT,
-	//		CW_USEDEFAULT,
-	//		CW_USEDEFAULT,
-	//		0,
-	//		0,
-	//		hInstance,
-	//		0);
 
 	if (!hwnd)
 	{
@@ -563,7 +549,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 //	fclose(lf);
 //}
 
-// strcat()
 static void catStrings(size_t sourceAcount, char *sourceA,
 				size_t sourceBcount, char *sourceB,
 				size_t destCount, char *dest)
@@ -575,7 +560,6 @@ static void catStrings(size_t sourceAcount, char *sourceA,
 	*dest++ = 0;
 }
 
-// strlen()
 static int stringLength(char *string)
 {
 	int count = 0;
@@ -734,7 +718,6 @@ static void initDSound(HWND hwnd, int32_t samplesPerSecond, int32_t bufferSize)
 	{
 		// get a directSound object! - cooperative
 		win32directSoundCreate *directSoundCreate = (win32directSoundCreate *)GetProcAddress(DSoundLibrary, "DirectSoundCreate");
-		//TODO double-check that this works on XP - DirectSound8 or 7??
 		LPDIRECTSOUND directSound;
 
 		if (directSoundCreate && SUCCEEDED(directSoundCreate(0, &directSound, 0)))

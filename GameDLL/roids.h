@@ -2,8 +2,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdlib.h>	// exit(), rand(), malloc()
-#include <time.h>	// time()
+#include <stdlib.h>
+#include <time.h>
 
 #define WINDOW_WIDTH 1030
 #define WINDOW_HEIGHT 600
@@ -64,7 +64,6 @@ void gameReset(struct gameState *);
 void shipReset(void);
 void bulletReset(int);
 void bulletsReset(void);
-void asteroidReset(int);
 void asteroidsReset(void);
 void line(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
 void lineLow(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
