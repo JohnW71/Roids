@@ -60,11 +60,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	int64_t perfCountFrequency = perfCountFrequencyResult.QuadPart;
 
 	// define filenames for hot loading
-	getExeFilename(&state);
-	char srcGameCodeDLLpath[MAX_PATH];
-	char tmpGameCodeDLLpath[MAX_PATH];
-	buildDLLPathFilename(&state, "Roids.dll", sizeof(srcGameCodeDLLpath), srcGameCodeDLLpath);
-	buildDLLPathFilename(&state, "Roids_tmp.dll", sizeof(tmpGameCodeDLLpath), tmpGameCodeDLLpath);
+	//getExeFilename(&state);
+	//char srcGameCodeDLLpath[MAX_PATH];
+	//char tmpGameCodeDLLpath[MAX_PATH];
+	//buildDLLPathFilename(&state, "Roids.dll", sizeof(srcGameCodeDLLpath), srcGameCodeDLLpath);
+	//buildDLLPathFilename(&state, "Roids_tmp.dll", sizeof(tmpGameCodeDLLpath), tmpGameCodeDLLpath);
 
 	// set windows scheduler granularity to 1ms
 	UINT desiredSchedulerMs = 1;
@@ -99,7 +99,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 	HWND hwnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW,
 								wc.lpszClassName,
-								"Roids v0.4",
+								"Roids v0.5",
 								WS_BORDER | WS_CAPTION | WS_VISIBLE, // WS_EX_TOPMOST
 								CW_USEDEFAULT, CW_USEDEFAULT,
 								WINDOW_WIDTH+20, WINDOW_HEIGHT+40,
@@ -176,7 +176,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 	//DWORD audioLatencyBytes = 0;
 	//float audioLatencySeconds = 0;
 	bool soundIsValid = false;
-	struct win32gameCode game = loadGameCode(srcGameCodeDLLpath, tmpGameCodeDLLpath);
+	//struct win32gameCode game = loadGameCode(srcGameCodeDLLpath, tmpGameCodeDLLpath);
 
 	running = true;
 	paused = false;
@@ -189,12 +189,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 		newInput->dtForFrame = targetSecondsPerFrame;
 
 		// reload DLL if time changed
-		FILETIME newDLLwriteTime = getLastWriteTime(srcGameCodeDLLpath);
-		if (CompareFileTime(&newDLLwriteTime, &game.DLLlastWriteTime) != 0)
-		{
-			unloadGameCode(&game);
-			game = loadGameCode(srcGameCodeDLLpath, tmpGameCodeDLLpath);
-		}
+		//FILETIME newDLLwriteTime = getLastWriteTime(srcGameCodeDLLpath);
+		//if (CompareFileTime(&newDLLwriteTime, &game.DLLlastWriteTime) != 0)
+		//{
+		//	unloadGameCode(&game);
+		//	game = loadGameCode(srcGameCodeDLLpath, tmpGameCodeDLLpath);
+		//}
 
 		// zero controller info
 		struct gameControllerInput *oldKeyboardController = getController(oldInput, 0);
@@ -327,10 +327,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 			gameBuffer.bytesPerPixel = backBuffer.bytesPerPixel;
 
 			// update display
-			if (game.updateAndRender)
-				game.updateAndRender(&thread, &memory, newInput, &gameBuffer, FPS);
+			//if (game.updateAndRender)
+			//	game.updateAndRender(&thread, &memory, newInput, &gameBuffer, FPS);
 			//else
 			//	outs("game.updateAndRender is null!");
+			updateAndRender(&thread, &memory, newInput, &gameBuffer, FPS);
 
 			LARGE_INTEGER audioWallClock = getWallClock();
 			float fromBeginToAudioSeconds = getSecondsElapsed(flipWallClock, audioWallClock, perfCountFrequency);
@@ -383,10 +384,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 				soundBuffer.samples = samples;
 
 				// update sound
-				if (game.getSoundSamples)
-					game.getSoundSamples(&thread, &memory, &soundBuffer);
+				//if (game.getSoundSamples)
+				//	game.getSoundSamples(&thread, &memory, &soundBuffer);
 				//else
 				//	outs("game.getSoundSamples is null!");
+				getSoundSamples(&thread, &memory, &soundBuffer);
 
 				// audio debugging info
 				// struct win32debugTimeMarker *marker = &debugTimeMarkers[debugTimeMarkerIndex];
@@ -569,74 +571,74 @@ static int stringLength(char *string)
 }
 
 // build path of current exe path + DLL name
-static void buildDLLPathFilename(struct win32state *state, char *filename, int destCount, char *dest)
-{
-	catStrings(state->onePastLastSlash - state->exeFilename,
-			   state->exeFilename, stringLength(filename), filename, destCount, dest);
-}
+//static void buildDLLPathFilename(struct win32state *state, char *filename, int destCount, char *dest)
+//{
+//	catStrings(state->onePastLastSlash - state->exeFilename,
+//			   state->exeFilename, stringLength(filename), filename, destCount, dest);
+//}
 
 // store current exe filename & size
-static void getExeFilename(struct win32state *state)
-{
-	//DWORD sizeOfFilename = // will this be needed?
-	GetModuleFileNameA(0, state->exeFilename, sizeof(state->exeFilename));
-	state->onePastLastSlash = state->exeFilename;
-
-	// get position of first char of filename after last slash
-	for (char *scan = state->exeFilename; *scan; ++scan)
-		if (*scan == '\\')
-			state->onePastLastSlash = scan + 1;
-}
-
-static FILETIME getLastWriteTime(char *filename)
-{
-	FILETIME lastWriteTime = {0};
-	WIN32_FILE_ATTRIBUTE_DATA data;
-
-	if (GetFileAttributesEx(filename, GetFileExInfoStandard, &data))
-		lastWriteTime = data.ftLastWriteTime;
-
-	return lastWriteTime;
-}
+//static void getExeFilename(struct win32state *state)
+//{
+//	//DWORD sizeOfFilename = // will this be needed?
+//	GetModuleFileNameA(0, state->exeFilename, sizeof(state->exeFilename));
+//	state->onePastLastSlash = state->exeFilename;
+//
+//	// get position of first char of filename after last slash
+//	for (char *scan = state->exeFilename; *scan; ++scan)
+//		if (*scan == '\\')
+//			state->onePastLastSlash = scan + 1;
+//}
+//
+//static FILETIME getLastWriteTime(char *filename)
+//{
+//	FILETIME lastWriteTime = {0};
+//	WIN32_FILE_ATTRIBUTE_DATA data;
+//
+//	if (GetFileAttributesEx(filename, GetFileExInfoStandard, &data))
+//		lastWriteTime = data.ftLastWriteTime;
+//
+//	return lastWriteTime;
+//}
 
 // load functions by pointer and copy DLL to tmp
-struct win32gameCode loadGameCode(char *sourceDLLname, char *tempDLLname)
-{
-	struct win32gameCode result = {0};
-	result.DLLlastWriteTime = getLastWriteTime(sourceDLLname);
-	CopyFile(sourceDLLname, tempDLLname, FALSE);
-	result.gameCodeDLL = LoadLibraryA(tempDLLname);
-
-	if (result.gameCodeDLL)
-	{
-		result.updateAndRender = (game_UpdateAndRender *)GetProcAddress(result.gameCodeDLL, "gameUpdateAndRender");
-		result.getSoundSamples = (game_GetSoundSamples *)GetProcAddress(result.gameCodeDLL, "gameGetSoundSamples");
-		result.isValid = (result.updateAndRender && result.getSoundSamples);
-	}
-
-	if (!result.isValid)
-	{
-		//outs("Failed loading game code DLL");
-		result.updateAndRender = 0;
-		result.getSoundSamples = 0;
-	}
-
-	return result;
-}
+//struct win32gameCode loadGameCode(char *sourceDLLname, char *tempDLLname)
+//{
+//	struct win32gameCode result = {0};
+//	result.DLLlastWriteTime = getLastWriteTime(sourceDLLname);
+//	CopyFile(sourceDLLname, tempDLLname, FALSE);
+//	result.gameCodeDLL = LoadLibraryA(tempDLLname);
+//
+//	if (result.gameCodeDLL)
+//	{
+//		result.updateAndRender = (game_UpdateAndRender *)GetProcAddress(result.gameCodeDLL, "gameUpdateAndRender");
+//		result.getSoundSamples = (game_GetSoundSamples *)GetProcAddress(result.gameCodeDLL, "gameGetSoundSamples");
+//		result.isValid = (result.updateAndRender && result.getSoundSamples);
+//	}
+//
+//	if (!result.isValid)
+//	{
+//		//outs("Failed loading game code DLL");
+//		result.updateAndRender = 0;
+//		result.getSoundSamples = 0;
+//	}
+//
+//	return result;
+//}
 
 // unload DLL
-static void unloadGameCode(struct win32gameCode *gameCode)
-{
-	if (gameCode->gameCodeDLL)
-	{
-		FreeLibrary(gameCode->gameCodeDLL);
-		gameCode->gameCodeDLL = 0;
-	}
-
-	gameCode->isValid = false;
-	gameCode->updateAndRender = 0;
-	gameCode->getSoundSamples = 0;
-}
+//static void unloadGameCode(struct win32gameCode *gameCode)
+//{
+//	if (gameCode->gameCodeDLL)
+//	{
+//		FreeLibrary(gameCode->gameCodeDLL);
+//		gameCode->gameCodeDLL = 0;
+//	}
+//
+//	gameCode->isValid = false;
+//	gameCode->updateAndRender = 0;
+//	gameCode->getSoundSamples = 0;
+//}
 
 // fill out bitmap info and assign memory for pixels
 static void createBuffer(struct win32displayBuffer *buffer, int width, int height)

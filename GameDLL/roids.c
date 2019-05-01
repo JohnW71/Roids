@@ -2,6 +2,8 @@
 
 #include <math.h>
 
+// -EXPORT:gameGetSoundSamples -EXPORT:gameUpdateAndRender 
+
 static int BLOB_SIZE;
 static int MAX_COLS;
 static int MAX_ROWS;
@@ -27,7 +29,8 @@ static void outputSound(struct gameState *state, struct gameSoundOutputBuffer *s
 }
 
 //#pragma comment(linker, "/export:gameGetSoundSamples")
-GAME_GET_SOUND_SAMPLES(gameGetSoundSamples)
+//GAME_GET_SOUND_SAMPLES(gameGetSoundSamples)
+void getSoundSamples(struct threadContext *thread, struct gameMemory *memory, struct gameSoundOutputBuffer *soundBuffer)
 {
 	struct gameState *state = (struct gameState *)memory->permanentStorage;
 	outputSound(state, soundBuffer, 400);
@@ -567,7 +570,8 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 }
 
 //#pragma comment(linker, "/export:gameUpdateAndRender")
-GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
+//GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
+void updateAndRender(struct threadContext *thread, struct gameMemory *memory, struct gameInput *input, struct gameDisplayBuffer *buffer, float FPS)
 {
 	// check that difference between addresses of first & last buttons matches intended count
 	assert((&input->controllers[0].terminator - &input->controllers[0].buttons[0]) == (arrayCount(input->controllers[0].buttons)));

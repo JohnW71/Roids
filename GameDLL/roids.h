@@ -47,12 +47,12 @@
 #define ORANGE 0x00FFA500
 
 // manual function definitions
-#define GAME_UPDATE_AND_RENDER(name) void name(struct threadContext *thread, struct gameMemory *memory, struct gameInput *input, struct gameDisplayBuffer *buffer, float FPS)
-#define GAME_GET_SOUND_SAMPLES(name) void name(struct threadContext *thread, struct gameMemory *memory, struct gameSoundOutputBuffer *soundBuffer)
+//#define GAME_UPDATE_AND_RENDER(name) void name(struct threadContext *thread, struct gameMemory *memory, struct gameInput *input, struct gameDisplayBuffer *buffer, float FPS)
+//#define GAME_GET_SOUND_SAMPLES(name) void name(struct threadContext *thread, struct gameMemory *memory, struct gameSoundOutputBuffer *soundBuffer)
 
 // function typedefs
-typedef GAME_UPDATE_AND_RENDER(game_UpdateAndRender);
-typedef GAME_GET_SOUND_SAMPLES(game_GetSoundSamples);
+//typedef GAME_UPDATE_AND_RENDER(game_UpdateAndRender);
+//typedef GAME_GET_SOUND_SAMPLES(game_GetSoundSamples);
 
 int offsetCol(int);
 int offsetRow(int);
@@ -76,6 +76,8 @@ void drawDigit(struct gameDisplayBuffer *, short, short, short, uint32_t);
 void drawDigits(struct gameDisplayBuffer *, short, short, float, uint32_t);
 void createAsteroid(short, float);
 void gameOver(struct gameDisplayBuffer *, struct gameState *);
+void getSoundSamples(struct threadContext *, struct gameMemory *, struct gameSoundOutputBuffer *);
+void updateAndRender(struct threadContext *, struct gameMemory *, struct gameInput *, struct gameDisplayBuffer *, float);
 
 struct threadContext
 {
@@ -173,7 +175,8 @@ struct gameInput
 	struct gameControllerInput controllers[5];
 };
 
-struct gameControllerInput *getController(struct gameInput *input, unsigned int controllerIndex)
+// static to prevent linker error after removing hotloading
+static struct gameControllerInput *getController(struct gameInput *input, unsigned int controllerIndex)
 {
 	assert(controllerIndex < arrayCount(input->controllers));
 	struct gameControllerInput *result = &input->controllers[controllerIndex];

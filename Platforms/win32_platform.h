@@ -11,15 +11,15 @@ void initDSound(HWND, int32_t, int32_t);
 void fillSoundBuffer(struct win32soundOutput *, DWORD, DWORD, struct gameSoundOutputBuffer *);
 void clearSoundBuffer(struct win32soundOutput *);
 void catStrings(size_t, char *, size_t, char *, size_t, char *);
-void buildDLLPathFilename(struct win32state *, char *, int, char *);
-void getExeFilename(struct win32state *);
-void unloadGameCode(struct win32gameCode *);
+//void buildDLLPathFilename(struct win32state *, char *, int, char *);
+//void getExeFilename(struct win32state *);
+//void unloadGameCode(struct win32gameCode *);
 void processKeyboardMessage(struct gameButtonState *, bool);
 void processXinputDigitalButton(DWORD, struct gameButtonState *, DWORD, struct gameButtonState *);
 void processPendingMessages(struct win32state *, struct gameControllerInput *);
 float processXinputStickValue(SHORT, SHORT);
-struct win32gameCode loadGameCode(char *, char *);
-inline FILETIME getLastWriteTime(char *);
+//struct win32gameCode loadGameCode(char *, char *);
+//inline FILETIME getLastWriteTime(char *);
 inline LARGE_INTEGER getWallClock(void);
 inline float getSecondsElapsed(LARGE_INTEGER, LARGE_INTEGER, int64_t);
 
@@ -57,17 +57,17 @@ struct win32debugTimeMarker
 	DWORD flipWriteCursor;
 };
 
-struct win32gameCode
-{
-	HMODULE gameCodeDLL;
-	FILETIME DLLlastWriteTime;
-
-	// function pointers
-	game_UpdateAndRender *updateAndRender;
-	game_GetSoundSamples *getSoundSamples;
-
-	bool isValid;
-};
+//struct win32gameCode
+//{
+//	HMODULE gameCodeDLL;
+//	FILETIME DLLlastWriteTime;
+//
+//	// function pointers
+//	game_UpdateAndRender *updateAndRender;
+//	game_GetSoundSamples *getSoundSamples;
+//
+//	bool isValid;
+//};
 
 struct win32state
 {
