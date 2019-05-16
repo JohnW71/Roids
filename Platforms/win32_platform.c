@@ -99,7 +99,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 	HWND hwnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW,
 								wc.lpszClassName,
-								"Roids v0.5",
+								"Roids v0.6",
 								WS_BORDER | WS_CAPTION | WS_VISIBLE, // WS_EX_TOPMOST
 								CW_USEDEFAULT, CW_USEDEFAULT,
 								WINDOW_WIDTH+20, WINDOW_HEIGHT+40,

@@ -4,6 +4,7 @@
 
 // -EXPORT:gameGetSoundSamples -EXPORT:gameUpdateAndRender 
 
+static float GAME_SCALE;
 static int BLOB_SIZE;
 static int MAX_COLS;
 static int MAX_ROWS;
@@ -149,8 +150,8 @@ static void createAsteroid(short parent, float dtForFrame)
 			asteroids[child].position.angle = (float)(rand() % 360);
 			asteroids[child].position.x = asteroids[parent].position.x;
 			asteroids[child].position.y = asteroids[parent].position.y;
-			asteroids[child].position.dx = sinf(asteroids[child].position.angle) * ASTEROID_SPEED * dtForFrame;
-			asteroids[child].position.dy = cosf(asteroids[child].position.angle) * ASTEROID_SPEED * dtForFrame;
+			asteroids[child].position.dx = sinf(asteroids[child].position.angle) * ASTEROID_SPEED * GAME_SCALE * dtForFrame;
+			asteroids[child].position.dy = cosf(asteroids[child].position.angle) * ASTEROID_SPEED * GAME_SCALE * dtForFrame;
 
 			// generate vectors
 			for (int v = 0; v < asteroids[child].verts; ++v)
@@ -582,14 +583,13 @@ void updateAndRender(struct threadContext *thread, struct gameMemory *memory, st
 	struct gameState *state = (struct gameState *)memory->permanentStorage;
 	if (!memory->isInitialized)
 	{
+		GAME_SCALE = 1.0f;
 		BLOB_SIZE = 3;
 		MAX_COLS = (WINDOW_WIDTH / BLOB_SIZE);
 		MAX_ROWS = (WINDOW_HEIGHT / BLOB_SIZE);
 
 		memory->isInitialized = true;
 		srand((unsigned int)time(NULL));
-		//state->toneHz = 512;
-		//state->tSine = 0.0f;
 		gameReset(state);
 	}
 
@@ -614,8 +614,8 @@ void updateAndRender(struct threadContext *thread, struct gameMemory *memory, st
 			if (controller->moveUp.endedDown || controller->actionUp.endedDown || controller->rightShoulder.endedDown)
 			{
 				// acceleration changes velocity over time
-				ship.position.dx += sinf(ship.position.angle) * MOVE_SPEED * input->dtForFrame;
-				ship.position.dy += -cosf(ship.position.angle) * MOVE_SPEED * input->dtForFrame;
+				ship.position.dx += sinf(ship.position.angle) * MOVE_SPEED * GAME_SCALE * input->dtForFrame;
+				ship.position.dy += -cosf(ship.position.angle) * MOVE_SPEED * GAME_SCALE * input->dtForFrame;
 			}
 
 			// reset
@@ -670,30 +670,37 @@ void updateAndRender(struct threadContext *thread, struct gameMemory *memory, st
 				BLOB_SIZE = 1;
 				MAX_COLS = (WINDOW_WIDTH / BLOB_SIZE);
 				MAX_ROWS = (WINDOW_HEIGHT / BLOB_SIZE);
+				GAME_SCALE = 3.0f;
 				gameReset(state);
 				controller->one.endedDown = false;
 			}
+			// two
 			if (controller->two.endedDown)
 			{
 				BLOB_SIZE = 2;
 				MAX_COLS = (WINDOW_WIDTH / BLOB_SIZE);
 				MAX_ROWS = (WINDOW_HEIGHT / BLOB_SIZE);
+				GAME_SCALE = 1.5f;
 				gameReset(state);
 				controller->two.endedDown = false;
 			}
+			// three
 			if (controller->three.endedDown)
 			{
 				BLOB_SIZE = 3;
 				MAX_COLS = (WINDOW_WIDTH / BLOB_SIZE);
 				MAX_ROWS = (WINDOW_HEIGHT / BLOB_SIZE);
+				GAME_SCALE = 1.0f;
 				gameReset(state);
 				controller->three.endedDown = false;
 			}
+			// four
 			if (controller->four.endedDown)
 			{
 				BLOB_SIZE = 4;
 				MAX_COLS = (WINDOW_WIDTH / BLOB_SIZE);
 				MAX_ROWS = (WINDOW_HEIGHT / BLOB_SIZE);
+				GAME_SCALE = 0.75f;
 				gameReset(state);
 				controller->four.endedDown = false;
 			}
@@ -726,8 +733,8 @@ void updateAndRender(struct threadContext *thread, struct gameMemory *memory, st
 		for (int i = 0; i < MAX_BULLETS; ++i)
 			if (bullets[i].alive)
 			{
-				bullets[i].position.dx += sinf(bullets[i].position.angle) * BULLET_SPEED * input->dtForFrame;
-				bullets[i].position.dy += -cosf(bullets[i].position.angle) * BULLET_SPEED * input->dtForFrame;
+				bullets[i].position.dx += sinf(bullets[i].position.angle) * (BULLET_SPEED * GAME_SCALE) * input->dtForFrame;
+				bullets[i].position.dy += -cosf(bullets[i].position.angle) * (BULLET_SPEED * GAME_SCALE) * input->dtForFrame;
 
 				// if off screen remove it
 				if (offsetCol((int)bullets[i].position.dx) < 0 || offsetCol((int)bullets[i].position.dx) > MAX_COLS ||
@@ -756,8 +763,8 @@ void updateAndRender(struct threadContext *thread, struct gameMemory *memory, st
 					asteroids[i].position.y = (float)(rand() % MAX_ROWS) - (MAX_ROWS / 2);
 				}
 
-				asteroids[i].position.dx = sinf(asteroids[i].position.angle) * ASTEROID_SPEED * input->dtForFrame;
-				asteroids[i].position.dy = cosf(asteroids[i].position.angle) * ASTEROID_SPEED * input->dtForFrame;
+				asteroids[i].position.dx = sinf(asteroids[i].position.angle) * (ASTEROID_SPEED * GAME_SCALE) * input->dtForFrame;
+				asteroids[i].position.dy = cosf(asteroids[i].position.angle) * (ASTEROID_SPEED * GAME_SCALE) * input->dtForFrame;
 
 				for (int v = 0; v < asteroids[i].verts; ++v)
 				{
@@ -778,7 +785,7 @@ void updateAndRender(struct threadContext *thread, struct gameMemory *memory, st
 			{
 				// check for ship collision
 				if (collisionDetected(asteroids[i].position.x, asteroids[i].position.y,
-					asteroids[i].size,
+					asteroids[i].size * GAME_SCALE,
 					ship.position.x, ship.position.y))
 				{
 					gameReload(state);
@@ -788,7 +795,7 @@ void updateAndRender(struct threadContext *thread, struct gameMemory *memory, st
 				for (int b = 0; b < MAX_BULLETS; ++b)
 					if (bullets[b].alive)
 						if (collisionDetected(asteroids[i].position.x, asteroids[i].position.y,
-							(asteroids[i].size / 100.0f) * 95.0f,
+							((asteroids[i].size / 100.0f) * GAME_SCALE) * 95.0f,
 							bullets[b].position.dx, bullets[b].position.dy))
 						{
 							asteroids[i].alive = false;
@@ -816,12 +823,12 @@ void updateAndRender(struct threadContext *thread, struct gameMemory *memory, st
 			}
 
 		// draw ship
-		drawFrame(buffer, state, &ship.position, ship.verts, SHIP_SCALE, WHITE);
+		drawFrame(buffer, state, &ship.position, ship.verts, SHIP_SCALE * GAME_SCALE, WHITE);
 
 		// draw asteroids
 		for (int i = 0; i < MAX_ASTEROIDS; ++i)
 			if (asteroids[i].alive)
-				drawFrame(buffer, state, &asteroids[i].position, asteroids[i].verts, ASTEROID_SCALE, WHITE);
+				drawFrame(buffer, state, &asteroids[i].position, asteroids[i].verts, ASTEROID_SCALE * GAME_SCALE, WHITE);
 
 		// draw bullets
 		for (int i = 0; i < MAX_BULLETS; ++i)
