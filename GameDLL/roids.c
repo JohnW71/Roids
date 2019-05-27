@@ -2,12 +2,36 @@
 
 #include <math.h>
 
-// -EXPORT:gameGetSoundSamples -EXPORT:gameUpdateAndRender 
+// -EXPORT:gameGetSoundSamples -EXPORT:gameUpdateAndRender
 
 static float GAME_SCALE;
 static int BLOB_SIZE;
 static int MAX_COLS;
 static int MAX_ROWS;
+
+static int offsetCol(int);
+static int offsetRow(int);
+static bool collisionDetected(float, float, float, float, float);
+static short countAsteroids(void);
+static void outputSound(struct gameState *, struct gameSoundOutputBuffer *, int);
+static void gameReload(struct gameState *);
+static void gameReset(struct gameState *);
+static void shipReset(void);
+static void bulletReset(int);
+static void bulletsReset(void);
+static void asteroidsReset(void);
+static void line(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
+static void lineLow(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
+static void lineHigh(struct gameDisplayBuffer *, int, int, int, int, uint32_t);
+static void blob(struct gameDisplayBuffer *, int, int, uint32_t);
+static void drawFrame(struct gameDisplayBuffer *, struct gameState *, struct Position *, short, float, uint32_t);
+static void wrapCoordinates(int, int, int *, int *);
+static void wrapModel(struct Position *);
+static void drawDigit(struct gameDisplayBuffer *, short, short, short, uint32_t);
+static void drawDigits(struct gameDisplayBuffer *, short, short, float, uint32_t);
+static void createAsteroid(short, float);
+static void gameOver(struct gameDisplayBuffer *, struct gameState *);
+static void drawCharacter(struct gameDisplayBuffer *, short, short, short, uint32_t);
 
 static void outputSound(struct gameState *state, struct gameSoundOutputBuffer *soundBuffer, int toneHz)
 {
@@ -500,15 +524,15 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	}
 
 	// rotated vectors
-	if (state->hud)
-	{
-		drawDigits(buffer, offsetCol((int)position->x) + 10, offsetRow((int)position->y) + 24, new_vectors[0][0], GREEN);
-		drawDigits(buffer, offsetCol((int)position->x) + 28, offsetRow((int)position->y) + 24, new_vectors[0][1], GREEN);
-		drawDigits(buffer, offsetCol((int)position->x) + 48, offsetRow((int)position->y) + 24, new_vectors[1][0], GREEN);
-		drawDigits(buffer, offsetCol((int)position->x) + 66, offsetRow((int)position->y) + 24, new_vectors[1][1], GREEN);
-		drawDigits(buffer, offsetCol((int)position->x) + 86, offsetRow((int)position->y) + 24, new_vectors[2][0], GREEN);
-		drawDigits(buffer, offsetCol((int)position->x) + 104, offsetRow((int)position->y) + 24, new_vectors[2][1], GREEN);
-	}
+	//if (state->hud)
+	//{
+	//	drawDigits(buffer, offsetCol((int)position->x) + 10, offsetRow((int)position->y) + 24, new_vectors[0][0], GREEN);
+	//	drawDigits(buffer, offsetCol((int)position->x) + 28, offsetRow((int)position->y) + 24, new_vectors[0][1], GREEN);
+	//	drawDigits(buffer, offsetCol((int)position->x) + 48, offsetRow((int)position->y) + 24, new_vectors[1][0], GREEN);
+	//	drawDigits(buffer, offsetCol((int)position->x) + 66, offsetRow((int)position->y) + 24, new_vectors[1][1], GREEN);
+	//	drawDigits(buffer, offsetCol((int)position->x) + 86, offsetRow((int)position->y) + 24, new_vectors[2][0], GREEN);
+	//	drawDigits(buffer, offsetCol((int)position->x) + 104, offsetRow((int)position->y) + 24, new_vectors[2][1], GREEN);
+	//}
 
 	// update scale
 	for (int i = 0; i < verts; ++i)
@@ -518,15 +542,15 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	}
 
 	// scaled vectors
-	if (state->hud)
-	{
-		drawDigits(buffer, offsetCol((int)position->x) + 10, offsetRow((int)position->y) + 30, new_vectors[0][0], CYAN);
-		drawDigits(buffer, offsetCol((int)position->x) + 28, offsetRow((int)position->y) + 30, new_vectors[0][1], CYAN);
-		drawDigits(buffer, offsetCol((int)position->x) + 48, offsetRow((int)position->y) + 30, new_vectors[1][0], CYAN);
-		drawDigits(buffer, offsetCol((int)position->x) + 66, offsetRow((int)position->y) + 30, new_vectors[1][1], CYAN);
-		drawDigits(buffer, offsetCol((int)position->x) + 86, offsetRow((int)position->y) + 30, new_vectors[2][0], CYAN);
-		drawDigits(buffer, offsetCol((int)position->x) + 104, offsetRow((int)position->y) + 30, new_vectors[2][1], CYAN);
-	}
+	//if (state->hud)
+	//{
+	//	drawDigits(buffer, offsetCol((int)position->x) + 10, offsetRow((int)position->y) + 30, new_vectors[0][0], CYAN);
+	//	drawDigits(buffer, offsetCol((int)position->x) + 28, offsetRow((int)position->y) + 30, new_vectors[0][1], CYAN);
+	//	drawDigits(buffer, offsetCol((int)position->x) + 48, offsetRow((int)position->y) + 30, new_vectors[1][0], CYAN);
+	//	drawDigits(buffer, offsetCol((int)position->x) + 66, offsetRow((int)position->y) + 30, new_vectors[1][1], CYAN);
+	//	drawDigits(buffer, offsetCol((int)position->x) + 86, offsetRow((int)position->y) + 30, new_vectors[2][0], CYAN);
+	//	drawDigits(buffer, offsetCol((int)position->x) + 104, offsetRow((int)position->y) + 30, new_vectors[2][1], CYAN);
+	//}
 
 	// translate co-ordinates
 	for (int i = 0; i < verts; ++i)
@@ -536,15 +560,15 @@ static void drawFrame(struct gameDisplayBuffer *buffer, struct gameState *state,
 	}
 
 	// translated vectors
-	if (state->hud)
-	{
-		drawDigits(buffer, offsetCol((int)position->x) + 10, offsetRow((int)position->y) + 36, new_vectors[0][0], ORANGE);
-		drawDigits(buffer, offsetCol((int)position->x) + 28, offsetRow((int)position->y) + 36, new_vectors[0][1], ORANGE);
-		drawDigits(buffer, offsetCol((int)position->x) + 48, offsetRow((int)position->y) + 36, new_vectors[1][0], ORANGE);
-		drawDigits(buffer, offsetCol((int)position->x) + 66, offsetRow((int)position->y) + 36, new_vectors[1][1], ORANGE);
-		drawDigits(buffer, offsetCol((int)position->x) + 86, offsetRow((int)position->y) + 36, new_vectors[2][0], ORANGE);
-		drawDigits(buffer, offsetCol((int)position->x) + 104, offsetRow((int)position->y) + 36, new_vectors[2][1], ORANGE);
-	}
+	//if (state->hud)
+	//{
+	//	drawDigits(buffer, offsetCol((int)position->x) + 10, offsetRow((int)position->y) + 36, new_vectors[0][0], ORANGE);
+	//	drawDigits(buffer, offsetCol((int)position->x) + 28, offsetRow((int)position->y) + 36, new_vectors[0][1], ORANGE);
+	//	drawDigits(buffer, offsetCol((int)position->x) + 48, offsetRow((int)position->y) + 36, new_vectors[1][0], ORANGE);
+	//	drawDigits(buffer, offsetCol((int)position->x) + 66, offsetRow((int)position->y) + 36, new_vectors[1][1], ORANGE);
+	//	drawDigits(buffer, offsetCol((int)position->x) + 86, offsetRow((int)position->y) + 36, new_vectors[2][0], ORANGE);
+	//	drawDigits(buffer, offsetCol((int)position->x) + 104, offsetRow((int)position->y) + 36, new_vectors[2][1], ORANGE);
+	//}
 
 	//uint32_t original = colour;
 
@@ -846,27 +870,45 @@ void updateAndRender(struct threadContext *thread, struct gameMemory *memory, st
 		if (state->hud)
 		{
 			// angle
-			drawDigits(buffer, offsetCol((int)ship.position.x) + 10, offsetRow((int)ship.position.y), ship.position.angle, BLUE);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 10, offsetRow((int)ship.position.y), 'A', BLUE);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 18, offsetRow((int)ship.position.y), 'N', BLUE);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 26, offsetRow((int)ship.position.y), 'G', BLUE);
+			drawDigits(buffer, offsetCol((int)ship.position.x) + 36, offsetRow((int)ship.position.y) + 1, ship.position.angle, BLUE);
 
 			// position
-			drawDigits(buffer, offsetCol((int)ship.position.x) + 10, offsetRow((int)ship.position.y) + 6, ship.position.x, CYAN);
-			drawDigits(buffer, offsetCol((int)ship.position.x) + 28, offsetRow((int)ship.position.y) + 6, ship.position.y, CYAN);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 10, offsetRow((int)ship.position.y) + 7, 'P', BLUE);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 18, offsetRow((int)ship.position.y) + 7, 'O', BLUE);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 26, offsetRow((int)ship.position.y) + 7, 'S', BLUE);
+			drawDigits(buffer, offsetCol((int)ship.position.x) + 36, offsetRow((int)ship.position.y) + 8, ship.position.x, CYAN);
+			drawDigits(buffer, offsetCol((int)ship.position.x) + 54, offsetRow((int)ship.position.y) + 8, ship.position.y, CYAN);
 
 			// thrust
-			drawDigits(buffer, offsetCol((int)ship.position.x) + 10, offsetRow((int)ship.position.y) + 12, ship.position.dx, ORANGE);
-			drawDigits(buffer, offsetCol((int)ship.position.x) + 28, offsetRow((int)ship.position.y) + 12, ship.position.dy, ORANGE);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 10, offsetRow((int)ship.position.y) + 14, 'T', BLUE);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 18, offsetRow((int)ship.position.y) + 14, 'H', BLUE);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 26, offsetRow((int)ship.position.y) + 14, 'R', BLUE);
+			drawDigits(buffer, offsetCol((int)ship.position.x) + 36, offsetRow((int)ship.position.y) + 15, ship.position.dx, ORANGE);
+			drawDigits(buffer, offsetCol((int)ship.position.x) + 54, offsetRow((int)ship.position.y) + 15, ship.position.dy, ORANGE);
 
 			// vec1
-			drawDigits(buffer, offsetCol((int)ship.position.x) + 10, offsetRow((int)ship.position.y) + 18, ship.position.vectors[0].x, YELLOW);
-			drawDigits(buffer, offsetCol((int)ship.position.x) + 28, offsetRow((int)ship.position.y) + 18, ship.position.vectors[0].y, YELLOW);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 10, offsetRow((int)ship.position.y) + 21, 'V', BLUE);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 18, offsetRow((int)ship.position.y) + 21, 'E', BLUE);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 26, offsetRow((int)ship.position.y) + 21, 'C', BLUE);
+			drawDigits(buffer, offsetCol((int)ship.position.x) + 36, offsetRow((int)ship.position.y) + 22, ship.position.vectors[0].x, YELLOW);
+			drawDigits(buffer, offsetCol((int)ship.position.x) + 54, offsetRow((int)ship.position.y) + 22, ship.position.vectors[0].y, YELLOW);
 
 			// vec2
-			drawDigits(buffer, offsetCol((int)ship.position.x) + 48, offsetRow((int)ship.position.y) + 18, ship.position.vectors[1].x, YELLOW);
-			drawDigits(buffer, offsetCol((int)ship.position.x) + 66, offsetRow((int)ship.position.y) + 18, ship.position.vectors[1].y, YELLOW);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 10, offsetRow((int)ship.position.y) + 28, 'V', BLUE);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 18, offsetRow((int)ship.position.y) + 28, 'E', BLUE);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 26, offsetRow((int)ship.position.y) + 28, 'C', BLUE);
+			drawDigits(buffer, offsetCol((int)ship.position.x) + 36, offsetRow((int)ship.position.y) + 29, ship.position.vectors[1].x, YELLOW);
+			drawDigits(buffer, offsetCol((int)ship.position.x) + 54, offsetRow((int)ship.position.y) + 29, ship.position.vectors[1].y, YELLOW);
 
 			// vec3
-			drawDigits(buffer, offsetCol((int)ship.position.x) + 86, offsetRow((int)ship.position.y) + 18, ship.position.vectors[2].x, YELLOW);
-			drawDigits(buffer, offsetCol((int)ship.position.x) + 104, offsetRow((int)ship.position.y) + 18, ship.position.vectors[2].y, YELLOW);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 10, offsetRow((int)ship.position.y) + 35, 'V', BLUE);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 18, offsetRow((int)ship.position.y) + 35, 'E', BLUE);
+			drawCharacter(buffer, offsetCol((int)ship.position.x) + 26, offsetRow((int)ship.position.y) + 35, 'C', BLUE);
+			drawDigits(buffer, offsetCol((int)ship.position.x) + 36, offsetRow((int)ship.position.y) + 36, ship.position.vectors[2].x, YELLOW);
+			drawDigits(buffer, offsetCol((int)ship.position.x) + 54, offsetRow((int)ship.position.y) + 36, ship.position.vectors[2].y, YELLOW);
 
 			// grid size
 			drawDigits(buffer, 1, 13, (float)MAX_COLS, BLUE);
@@ -1024,4 +1066,421 @@ static void gameOver(struct gameDisplayBuffer *buffer, struct gameState *state)
 	line(buffer, 40, 30, 48, 30, CYAN); // top
 	line(buffer, 40, 40, 48, 40, CYAN); // bottom
 	line(buffer, 40, 35, 45, 35, CYAN); // middle
+}
+
+static void drawCharacter(struct gameDisplayBuffer *buffer, short x, short y, short character, uint32_t colour)
+{
+	int grid[36][8][9] =
+	{
+		// A
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 1, 0, 1, 0, 0, 0},
+			{0, 0, 1, 0, 0, 0, 1, 0, 0},
+			{0, 1, 1, 1, 1, 1, 1, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// B
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 1, 1, 1, 1, 1, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 1, 1, 1, 1, 1, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// C
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 1, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// D
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 1, 1, 1, 1, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 1, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// E
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 1, 1, 1, 1, 1, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 1, 1, 1, 1, 1, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 1, 1, 1, 1, 1, 1, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// F
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 1, 1, 1, 1, 1, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 1, 1, 1, 1, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// G
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 1, 1, 1, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// H
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 1, 1, 1, 1, 1, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// I
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 1, 1, 1, 1, 1, 1, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 1, 1, 1, 1, 1, 1, 1, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// J
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 1, 1, 1, 1, 1, 1, 0},
+			{0, 0, 0, 0, 0, 1, 0, 0, 0},
+			{0, 0, 0, 0, 0, 1, 0, 0, 0},
+			{0, 0, 0, 0, 0, 1, 0, 0, 0},
+			{0, 1, 0, 0, 0, 1, 0, 0, 0},
+			{0, 0, 1, 1, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// K
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 1, 0, 0, 0},
+			{0, 1, 1, 1, 0, 0, 0, 0, 0},
+			{0, 1, 1, 1, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 1, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// L
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 1, 1, 1, 1, 1, 1, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// M
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 1, 0, 0, 0, 1, 1, 0},
+			{0, 1, 0, 1, 0, 1, 0, 1, 0},
+			{0, 1, 0, 0, 1, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// N
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 1, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 1, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 1, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 1, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 1, 1, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// O
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// P
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 1, 1, 1, 1, 1, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 1, 1, 1, 1, 1, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// Q
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 1, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 1, 1, 0},
+			{0, 0, 1, 1, 1, 1, 1, 1, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 1},
+		},
+		// R
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 1, 1, 1, 1, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 1, 0, 0},
+			{0, 1, 0, 0, 0, 0, 1, 0, 0},
+			{0, 1, 1, 1, 1, 1, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 1, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// S
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 1, 0},
+			{0, 0, 0, 0, 0, 0, 0, 1, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// T
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 1, 1, 1, 1, 1, 1, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// U
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// V
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 0, 1, 0, 0, 0, 1, 0, 0},
+			{0, 0, 1, 0, 0, 0, 1, 0, 0},
+			{0, 0, 0, 1, 0, 1, 0, 0, 0},
+			{0, 0, 0, 1, 0, 1, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// W
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 1, 0, 0, 1, 0, 0, 1, 0},
+			{0, 1, 0, 1, 0, 1, 0, 1, 0},
+			{0, 1, 1, 0, 0, 0, 1, 1, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// X
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 1, 0, 0},
+			{0, 0, 1, 0, 0, 1, 0, 0, 0},
+			{0, 0, 0, 1, 1, 0, 0, 0, 0},
+			{0, 0, 0, 1, 1, 0, 0, 0, 0},
+			{0, 0, 1, 0, 0, 1, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// Y
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 0, 0, 0, 0, 0, 1, 0},
+			{0, 0, 1, 0, 0, 0, 1, 0, 0},
+			{0, 0, 0, 1, 0, 1, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// Z
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 1, 1, 1, 1, 1, 1, 1, 0},
+			{0, 0, 0, 0, 0, 0, 1, 0, 0},
+			{0, 0, 0, 0, 0, 1, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 1, 0, 0, 0, 0, 0},
+			{0, 1, 1, 1, 1, 1, 1, 1, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// 0
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 1, 0, 0, 0, 1, 0, 0},
+			{0, 0, 1, 0, 0, 0, 1, 0, 0},
+			{0, 0, 1, 0, 0, 0, 1, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// 1
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// 2
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 1, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 1, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// 3
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 1, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 1, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// 4
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 0, 0, 0, 1, 0, 0},
+			{0, 0, 1, 0, 0, 0, 1, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// 5
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 1, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 1, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// 6
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 1, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 1, 0, 0, 0, 1, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// 7
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// 8
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 1, 0, 0, 0, 1, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 1, 0, 0, 0, 1, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		},
+		// 9
+		{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 1, 0, 0, 0, 1, 0, 0},
+			{0, 0, 1, 1, 1, 1, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 1, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		}
+	};
+
+	if (character >= 48 && character <= 57) // 0-9
+		character -= 22;
+	if (character >= 65 && character <= 90) // A-Z
+		character -= 65;
+
+	for (int row = 0; row < 8; ++row)
+	{
+		for (int col = 0; col < 9; ++col)
+		{
+			if (grid[character][row][col])
+				blob(buffer, x+col, y+row, colour);
+		}
+	}
 }

@@ -2,27 +2,6 @@
 
 #include "..\GameDLL\roids.h"
 
-int stringLength(char *);
-//void outs(char *);
-void createBuffer(struct win32displayBuffer *, int, int);
-void displayBuffer(struct win32displayBuffer *, HDC);
-void loadXInput(void);
-void initDSound(HWND, int32_t, int32_t);
-void fillSoundBuffer(struct win32soundOutput *, DWORD, DWORD, struct gameSoundOutputBuffer *);
-void clearSoundBuffer(struct win32soundOutput *);
-void catStrings(size_t, char *, size_t, char *, size_t, char *);
-//void buildDLLPathFilename(struct win32state *, char *, int, char *);
-//void getExeFilename(struct win32state *);
-//void unloadGameCode(struct win32gameCode *);
-void processKeyboardMessage(struct gameButtonState *, bool);
-void processXinputDigitalButton(DWORD, struct gameButtonState *, DWORD, struct gameButtonState *);
-void processPendingMessages(struct win32state *, struct gameControllerInput *);
-float processXinputStickValue(SHORT, SHORT);
-//struct win32gameCode loadGameCode(char *, char *);
-//inline FILETIME getLastWriteTime(char *);
-inline LARGE_INTEGER getWallClock(void);
-inline float getSecondsElapsed(LARGE_INTEGER, LARGE_INTEGER, int64_t);
-
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 struct win32displayBuffer

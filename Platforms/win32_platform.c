@@ -14,6 +14,27 @@ static bool paused;
 //static char logFile[] = "log.txt";
 static LPDIRECTSOUNDBUFFER secondaryBuffer;
 
+static int stringLength(char *);
+//static void outs(char *);
+static void createBuffer(struct win32displayBuffer *, int, int);
+static void displayBuffer(struct win32displayBuffer *, HDC);
+static void loadXInput(void);
+static void initDSound(HWND, int32_t, int32_t);
+static void fillSoundBuffer(struct win32soundOutput *, DWORD, DWORD, struct gameSoundOutputBuffer *);
+static void clearSoundBuffer(struct win32soundOutput *);
+static void catStrings(size_t, char *, size_t, char *, size_t, char *);
+//static void buildDLLPathFilename(struct win32state *, char *, int, char *);
+//static void getExeFilename(struct win32state *);
+//static void unloadGameCode(struct win32gameCode *);
+static void processKeyboardMessage(struct gameButtonState *, bool);
+static void processXinputDigitalButton(DWORD, struct gameButtonState *, DWORD, struct gameButtonState *);
+static void processPendingMessages(struct win32state *, struct gameControllerInput *);
+static float processXinputStickValue(SHORT, SHORT);
+//static struct win32gameCode loadGameCode(char *, char *);
+//static inline FILETIME getLastWriteTime(char *);
+static inline LARGE_INTEGER getWallClock(void);
+static inline float getSecondsElapsed(LARGE_INTEGER, LARGE_INTEGER, int64_t);
+
 // macros with parameters
 #define X_INPUT_GET_STATE(name) DWORD WINAPI name(DWORD dwUserIndex, XINPUT_STATE *pState)
 #define X_INPUT_SET_STATE(name) DWORD WINAPI name(DWORD dwUserIndex, XINPUT_VIBRATION *pVibration)
@@ -99,7 +120,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 	HWND hwnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW,
 								wc.lpszClassName,
-								"Roids v0.6",
+								"Roids v0.7",
 								WS_BORDER | WS_CAPTION | WS_VISIBLE, // WS_EX_TOPMOST
 								CW_USEDEFAULT, CW_USEDEFAULT,
 								WINDOW_WIDTH+20, WINDOW_HEIGHT+40,
@@ -538,7 +559,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-//void outs(char *s)
+//static void outs(char *s)
 //{
 //	FILE *lf = fopen(logFile, "a");
 //	if (lf == NULL)
@@ -602,7 +623,7 @@ static int stringLength(char *string)
 //}
 
 // load functions by pointer and copy DLL to tmp
-//struct win32gameCode loadGameCode(char *sourceDLLname, char *tempDLLname)
+//static struct win32gameCode loadGameCode(char *sourceDLLname, char *tempDLLname)
 //{
 //	struct win32gameCode result = {0};
 //	result.DLLlastWriteTime = getLastWriteTime(sourceDLLname);
