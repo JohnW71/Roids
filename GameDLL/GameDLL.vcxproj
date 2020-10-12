@@ -18,6 +18,12 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="roids.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="roids.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{C8C2B8DE-A9BB-475C-8725-87F0CAFD76C0}</ProjectGuid>

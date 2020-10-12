@@ -127,11 +127,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\GameDLL\roids.c" />
     <ClCompile Include="win32_platform.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\GameDLL\roids.h" />
     <ClInclude Include="win32_platform.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
